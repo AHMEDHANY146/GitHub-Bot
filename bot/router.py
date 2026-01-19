@@ -5,9 +5,17 @@ from bot.handlers.info_handler import handle_text_input, skip_field_callback
 from bot.handlers.voice_handler import voice_handler
 from bot.handlers.confirm_handler import (
     approve_readme_callback, 
-    edit_skills_callback, 
+    edit_skills_callback,
+    edit_contact_callback,
+    add_tech_stack_callback,
     regenerate_readme_callback, 
     cancel_readme_callback
+)
+from bot.handlers.language_handler import language_selection_callback
+from bot.handlers.rating_handler import (
+    handle_rating_callback, 
+    handle_feedback_callback, 
+    handle_feedback_text
 )
 from utils.logger import Logger
 
@@ -28,11 +36,19 @@ def setup_handlers(application: Application):
     application.add_handler(CallbackQueryHandler(skip_field_callback, pattern="^skip_"))
     application.add_handler(CallbackQueryHandler(approve_readme_callback, pattern="^approve_readme$"))
     application.add_handler(CallbackQueryHandler(edit_skills_callback, pattern="^edit_skills$"))
+    application.add_handler(CallbackQueryHandler(edit_contact_callback, pattern="^edit_contact$"))
+    application.add_handler(CallbackQueryHandler(add_tech_stack_callback, pattern="^add_tech_stack$"))
     application.add_handler(CallbackQueryHandler(regenerate_readme_callback, pattern="^regenerate_readme$"))
     application.add_handler(CallbackQueryHandler(cancel_readme_callback, pattern="^cancel_readme$"))
+    application.add_handler(CallbackQueryHandler(language_selection_callback, pattern="^lang_"))
+    
+    # Rating and feedback handlers
+    application.add_handler(CallbackQueryHandler(handle_rating_callback, pattern="^rating_"))
+    application.add_handler(CallbackQueryHandler(handle_feedback_callback, pattern="^feedback_"))
     
     # Message handlers
     application.add_handler(MessageHandler(filters.VOICE, voice_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_feedback_text), group=1)  # Lower priority for feedback
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
     
     logger.info("All handlers have been registered")
@@ -87,24 +103,48 @@ async def error_handler(update, context):
     """Handle errors in the bot"""
     logger.error(f"Update {update} caused error {context.error}")
     
+    # Get user language preference
+    user_id = update.effective_user.id if update and update.effective_user else None
+    user_language = None
+    if user_id:
+        try:
+            from bot.states import conversation_manager
+            user_language = conversation_manager.get_user_language(user_id)
+        except:
+            pass
+    
+    # Support message with developer contact (bilingual)
+    if user_language == 'ar':
+        support_message = """❌ حدث خطأ غير متوقع!
+
+🔧 الدعم الفني:
+تواصل مع المطور: @Ahmedhany146
+
+سيساعدك في حل أي مشكلة تواجهها. لا تتردد في مراسلته!"""
+        alert_message = "❌ حدث خطأ. تواصل مع @Ahmedhany146"
+    else:
+        support_message = """❌ An unexpected error occurred!
+
+🔧 Technical Support:
+Contact the developer: @Ahmedhany146
+
+They will help you solve any issue you face. Don't hesitate to reach out!"""
+        alert_message = "❌ An error occurred. Contact @Ahmedhany146"
+    
     # Send user-friendly error message only if update is not None
     if update is not None:
         if update.message:
-            await update.message.reply_text(
-                "❌ An unexpected error occurred. Please try again or contact support."
-            )
+            await update.message.reply_text(support_message, parse_mode='Markdown')
         elif update.callback_query:
             try:
                 await update.callback_query.answer(
-                    "❌ An error occurred. Please try again.",
+                    alert_message,
                     show_alert=True
                 )
             except:
                 # If answering fails, try to edit the message
                 try:
-                    await update.callback_query.message.reply_text(
-                        "❌ An unexpected error occurred. Please try again or contact support."
-                    )
+                    await update.callback_query.message.reply_text(support_message, parse_mode='Markdown')
                 except:
                     # If all else fails, just log the error
                     logger.error("Could not send error message to user")

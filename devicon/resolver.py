@@ -16,32 +16,8 @@ class DeviconResolver:
         self._setup_skill_mappings()
     
     def _setup_skill_mappings(self):
-        """Setup common skill name mappings"""
+        """Setup common skill name mappings - ONLY for skills with correct icons"""
         self.skill_mappings = {
-            # Data Science variations
-            'data science': 'python',
-            'data-science': 'python',
-            'datascience': 'python',
-            'machine learning': 'python',
-            'ml': 'python',
-            'artificial intelligence': 'python',
-            'ai': 'python',
-            'deep learning': 'python',
-            'tensorflow': 'tensorflow',
-            'pytorch': 'pytorch',
-            'pandas': 'python',
-            'numpy': 'python',
-            'scikit-learn': 'python',
-            'sklearn': 'python',
-            
-            # Dashboard variations
-            'dashboard development': 'react',
-            'dashboard dev': 'react',
-            'dashboards': 'react',
-            'dashboard': 'react',
-            'power bi': 'microsoftsqlserver',
-            'tableau': 'tableau',
-            
             # HTML/CSS variations
             'html': 'html5',
             'html5': 'html5',
@@ -57,14 +33,29 @@ class DeviconResolver:
             'node.js': 'nodejs',
             'nodejs': 'nodejs',
             
+            # Data Science tools with CORRECT icons
+            'tensorflow': 'tensorflow',
+            'pytorch': 'pytorch',
+            'pandas': 'pandas',
+            'numpy': 'numpy',
+            'matplotlib': 'matplotlib',
+            'jupyter': 'jupyter',
+            'anaconda': 'anaconda',
+            
             # Web frameworks
             'react': 'react',
             'reactjs': 'react',
             'vue': 'vuejs',
             'vuejs': 'vuejs',
+            'vue.js': 'vuejs',
             'angular': 'angularjs',
+            'angularjs': 'angularjs',
             'next.js': 'nextjs',
             'nextjs': 'nextjs',
+            'nuxt': 'nuxtjs',
+            'nuxt.js': 'nuxtjs',
+            'svelte': 'svelte',
+            'gatsby': 'gatsby',
             
             # Backend technologies
             'express': 'express',
@@ -73,21 +64,35 @@ class DeviconResolver:
             'django': 'django',
             'flask': 'flask',
             'fastapi': 'fastapi',
+            'spring': 'spring',
+            'laravel': 'laravel',
+            'rails': 'rails',
+            'ruby on rails': 'rails',
             
-            # Database variations
+            # Database - each has its OWN icon
             'mysql': 'mysql',
             'postgresql': 'postgresql',
             'postgres': 'postgresql',
             'mongodb': 'mongodb',
             'sqlite': 'sqlite',
             'redis': 'redis',
+            'oracle': 'oracle',
+            'mariadb': 'mariadb',
+            'cassandra': 'cassandra',
+            'neo4j': 'neo4j',
+            'graphql': 'graphql',
+            'sql server': 'microsoftsqlserver',
+            'mssql': 'microsoftsqlserver',
             
             # Cloud platforms
             'aws': 'amazonwebservices',
+            'amazon web services': 'amazonwebservices',
             'azure': 'azure',
             'google cloud': 'googlecloud',
             'gcp': 'googlecloud',
             'firebase': 'firebase',
+            'heroku': 'heroku',
+            'digitalocean': 'digitalocean',
             
             # DevOps tools
             'docker': 'docker',
@@ -97,13 +102,20 @@ class DeviconResolver:
             'git': 'git',
             'github': 'github',
             'gitlab': 'gitlab',
+            'bitbucket': 'bitbucket',
+            'terraform': 'terraform',
+            'ansible': 'ansible',
+            'nginx': 'nginx',
+            'apache': 'apache',
             
             # Programming languages
+            'python': 'python',
             'c++': 'cplusplus',
+            'cpp': 'cplusplus',
             'c#': 'csharp',
             'csharp': 'csharp',
-            '.net': 'dotnet',
-            'dotnet': 'dotnet',
+            '.net': 'dotnetcore',
+            'dotnet': 'dotnetcore',
             'java': 'java',
             'go': 'go',
             'golang': 'go',
@@ -112,33 +124,47 @@ class DeviconResolver:
             'kotlin': 'kotlin',
             'php': 'php',
             'ruby': 'ruby',
-            'ruby on rails': 'ruby',
-            'rails': 'ruby',
+            'scala': 'scala',
+            'perl': 'perl',
+            'lua': 'lua',
+            'dart': 'dart',
+            'r': 'r',
+            'matlab': 'matlab',
+            'haskell': 'haskell',
+            'elixir': 'elixir',
+            'clojure': 'clojure',
+            'groovy': 'groovy',
             
             # Mobile development
             'android': 'android',
-            'ios': 'apple',
-            'swift': 'swift',
-            'kotlin': 'kotlin',
-            'react native': 'react',
             'flutter': 'flutter',
+            'react native': 'react',
             
-            # Business process variations
-            'business process improvement': 'flow',
-            'process improvement': 'flow',
-            'business process': 'flow',
-            
-            # Other common tools
+            # Other tools with CORRECT icons
             'linux': 'linux',
             'ubuntu': 'ubuntu',
-            'windows': 'windows',
-            'macos': 'apple',
-            'vs code': 'visualstudiocode',
-            'vscode': 'visualstudiocode',
+            'debian': 'debian',
+            'centos': 'centos',
+            'bash': 'bash',
+            'vim': 'vim',
+            'vs code': 'vscode',
+            'vscode': 'vscode',
             'visual studio': 'visualstudio',
-            'sql': 'mysql',
-            'data analysis': 'python',
-            'tableau': 'tableau',
+            'intellij': 'intellij',
+            'pycharm': 'pycharm',
+            'webstorm': 'webstorm',
+            'atom': 'atom',
+            'figma': 'figma',
+            'photoshop': 'photoshop',
+            'illustrator': 'illustrator',
+            'blender': 'blender',
+            'unity': 'unity',
+            'unreal': 'unrealengine',
+            
+            # NOTE: These concepts DON'T have icons - removed from mappings:
+            # 'rag', 'chatbot', 'machine learning', 'ml', 'ai', 'artificial intelligence',
+            # 'deep learning', 'nlp', 'computer vision', 'data science', 'data analytics',
+            # 'power bi', 'tableau', 'business intelligence', 'sql', 'dashboard'
         }
     
     def _normalize_skill_name(self, skill: str) -> str:

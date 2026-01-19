@@ -1,12 +1,14 @@
 from enum import Enum
 from typing import Dict, Any, Optional
 import os
+from utils.language import Language
 
 
 
 class BotState(Enum):
     """Bot conversation states"""
     START = "start"
+    LANGUAGE_SELECTION = "language_selection"
     COLLECTING_INFO = "collecting_info"
     WAITING_NAME = "waiting_name"
     WAITING_GITHUB = "waiting_github"
@@ -15,6 +17,8 @@ class BotState(Enum):
     WAITING_EMAIL = "waiting_email"
     WAITING_VOICE = "waiting_voice"
     WAITING_TEXT = "waiting_text"
+    WAITING_CONTACT = "waiting_contact"
+    WAITING_TECH_STACK = "waiting_tech_stack"
     PROCESSING = "processing"
     CONFIRMATION = "confirmation"
     COMPLETED = "completed"
@@ -96,6 +100,11 @@ class ConversationManager:
         """Get data from user profile"""
         user = self.get_user(user_id)
         return user.get_data(key, default)
+    
+    def get_user_language(self, user_id: int) -> Language:
+        """Get user's preferred language, default to English"""
+        language_code = self.get_user_data(user_id, 'language', 'en')
+        return Language(language_code) if language_code in ['en', 'ar'] else Language.ENGLISH
     
     def clear_user(self, user_id: int):
         """Clear user data and cleanup"""

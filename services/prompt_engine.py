@@ -13,6 +13,12 @@ class PromptEngine:
         return """
 You are an intelligent assistant specialized in extracting personal information from voice recordings and organizing them into a professional README file.
 
+CRITICAL LANGUAGE INSTRUCTIONS:
+- NEVER write Arabic text or any non-English content
+- ALWAYS respond in English only
+- DO NOT include any Arabic introductions, greetings, or explanations
+- ALL output must be in English language exclusively
+
 Your task: Listen to the voice recording and extract all the following personal information:
 - Full name
 - Age
@@ -77,44 +83,61 @@ Use English for the entire file. If you cannot extract certain information, leav
         return """
 You are a professional resume analyzer and GitHub profile optimizer. 
 
+CRITICAL LANGUAGE INSTRUCTIONS:
+- NEVER write Arabic text or any non-English content
+- ALWAYS respond in English only
+- ALL JSON values must be in English
+- DO NOT include any Arabic text in extracted data
+
 Extract following information from user's input and return it as a JSON object:
 
 1. **name**: The person's full name
 2. **summary**: A brief professional summary (2-3 sentences) about their background and expertise
-3. **skills**: An array of technical skills including:
-   - Programming languages (python, javascript, c++, etc.)
-   - Data science tools (pandas, numpy, tensorflow, etc.)
-   - Frameworks and libraries
-   - Development methodologies
-4. **tools**: An array of development tools and platforms they use
-5. **languages**: An array of programming languages they know (focus on core languages)
+3. **skills**: An array of ALL technical skills mentioned including:
+   - Programming languages (python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
+   - Data science tools (pandas, numpy, tensorflow, pytorch, scikit-learn, jupyter, etc.)
+   - Frameworks and libraries (react, vue, angular, django, flask, spring, laravel, express, next, tailwind, bootstrap, etc.)
+   - Development methodologies (agile, scrum, devops, etc.)
+   - Cloud platforms (aws, azure, gcp, firebase, etc.)
+   - Databases (mysql, postgresql, mongodb, sqlite, redis, etc.)
+   - DevOps tools (docker, kubernetes, jenkins, git, github, gitlab, etc.)
+   - Frontend technologies (html, css, javascript, typescript, etc.)
+   - Backend technologies (nodejs, express, django, flask, etc.)
+   - Mobile development (react native, flutter, swift, kotlin, etc.)
+   - Business intelligence tools (power bi, tableau, etc.)
+4. **tools**: An array of development tools and platforms they use (git, github, docker, kubernetes, aws, azure, power bi, tableau, etc.)
+5. **languages**: An array of programming languages they know (focus on core languages: python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
 6. **currently_working_on**: What they're currently working on (extract from their description)
 7. **currently_learning**: What they're currently learning (extract from their description)
 8. **open_to**: What opportunities they're open to (extract from their description)
 9. **fun_fact**: A personal fun fact or interesting detail about them (extract from their description)
 
 Guidelines:
-- Extract skills that are relevant for software development and data science
+- BE COMPREHENSIVE: Extract ALL mentioned technologies, skills, and tools
 - Include both hard skills (technologies) and domain-specific skills
-- For tools, include things like Git, GitHub, Docker, AWS, Power BI, Tableau, etc.
-- For languages, focus on programming languages specifically (python, javascript, c++, etc.)
-- Separate data science skills from general programming skills when possible
+- For skills, include ANY technical term mentioned (even if you're not sure about the category)
+- For tools, include development tools, platforms, and services
+- For languages, focus on programming languages specifically
+- Separate different types of technologies appropriately but don't miss any
 - If information is missing, use null or empty array
 - Keep skill names lowercase and standardized (e.g., "javascript" not "JavaScript", "python" not "Python")
-- Be comprehensive but accurate - don't invent information
-- Look for indicators of data science, machine learning, web development, etc.
+- Be comprehensive but accurate - extract what's mentioned, don't invent completely new information
+- Look for indicators of data science, machine learning, web development, mobile development, etc.
 - For currently_working_on, look for phrases like "I'm working on", "Currently building", "My current project"
 - For currently_learning, look for phrases like "I'm learning", "Studying", "Currently exploring"
 - For open_to, look for phrases like "Looking for", "Open to", "Interested in"
 - For fun_fact, look for personal details, hobbies, or interesting facts they mention
 
-Examples of good categorization:
-- "I work with python and tensorflow" → skills: ["python", "tensorflow"], languages: ["python"]
-- "I use Power BI and Tableau for dashboards" → tools: ["power bi", "tableau"]
-- "I develop web apps with react and javascript" → skills: ["react", "javascript"], languages: ["javascript"]
+Examples of good extraction:
+- "I work with python, tensorflow, and react" → skills: ["python", "tensorflow", "react"], languages: ["python"]
+- "I use Power BI, Tableau, and Git for my projects" → skills: ["power bi", "tableau", "git"], tools: ["power bi", "tableau", "git"]
+- "I develop web apps with react, javascript, and next.js" → skills: ["react", "javascript", "next.js"], languages: ["javascript"]
+- "I'm experienced in docker, kubernetes, and aws deployment" → skills: ["docker", "kubernetes", "aws"], tools: ["docker", "kubernetes", "aws"]
 - "I'm currently working on a machine learning project for healthcare" → currently_working_on: "a machine learning project for healthcare"
 - "I'm learning Kubernetes and advanced React patterns" → currently_learning: "Kubernetes and advanced React patterns"
 - "I'm open to freelance opportunities and collaborations" → open_to: "freelance opportunities and collaborations"
+
+IMPORTANT: Extract as many relevant skills, tools, and languages as possible. Don't limit the extraction - be thorough.
 
 Return ONLY the JSON object. No markdown, no explanations, just the raw JSON.
 """

@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List, Optional
+from functools import lru_cache
 
 
 class Settings(BaseSettings):
@@ -8,13 +9,6 @@ class Settings(BaseSettings):
     APP_VERSION: str
 
     TELEGRAM_BOT_TOKEN: str
-
-    # Database
-    POSTGRES_USERNAME: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_HOST: str
-    POSTGRES_PORT: int
-    POSTGRES_MAIN_DATABASE: str
 
     # Backends
     STT_PROVIDER_MODEL_ID: str
@@ -33,5 +27,6 @@ class Settings(BaseSettings):
     )
 
 
+@lru_cache
 def get_settings() -> Settings:
     return Settings()

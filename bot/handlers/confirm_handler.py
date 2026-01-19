@@ -5,30 +5,41 @@ import tempfile
 import zipfile
 from io import BytesIO
 from bot.states import BotState, conversation_manager
+from utils.language import language_manager
 from utils.logger import Logger
 from bot.handlers import voice_handler
-
+from bot.handlers.rating_handler import show_rating_prompt
+from utils.language import Language
 
 logger = Logger.get_logger(__name__)
-
 
 async def show_confirmation(update: Update, user_id: int):
     """Show confirmation with extracted information"""
     user = conversation_manager.get_user(user_id)
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     structured_data = user.get_data('structured_data', {})
     
     # Format extracted information for display
-    confirmation_text = format_confirmation_text(structured_data, user)
+    confirmation_text = format_confirmation_text(structured_data, user, user_language)
     
-    # Create inline keyboard for confirmation
+    # Create inline keyboard for confirmation with more editing options
+    # Get bilingual button texts
+    edit_contact_text = "✏️ تعديل الاسم/الروابط" if user_language == Language.ARABIC else "✏️ Edit Name/Links"
+    add_tech_text = "🔧 إضافة تقنيات" if user_language == Language.ARABIC else "🔧 Add Tech Stack"
+    
     keyboard = [
         [
-            InlineKeyboardButton("✅ Approve & Generate", callback_data="approve_readme"),
-            InlineKeyboardButton("✏️ Edit Skills", callback_data="edit_skills")
+            InlineKeyboardButton(language_manager.get_text("approve_button", user_language), callback_data="approve_readme"),
+            InlineKeyboardButton(language_manager.get_text("edit_button", user_language), callback_data="edit_skills")
         ],
         [
-            InlineKeyboardButton("🔄 Regenerate", callback_data="regenerate_readme"),
-            InlineKeyboardButton("❌ Cancel", callback_data="cancel_readme")
+            InlineKeyboardButton(edit_contact_text, callback_data="edit_contact"),
+            InlineKeyboardButton(add_tech_text, callback_data="add_tech_stack")
+        ],
+        [
+            InlineKeyboardButton(language_manager.get_text("regenerate_button", user_language), callback_data="regenerate_readme"),
+            InlineKeyboardButton(language_manager.get_text("cancel_button", user_language), callback_data="cancel_readme")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -41,13 +52,17 @@ async def show_confirmation(update: Update, user_id: int):
     logger.info(f"Showing confirmation for user {user_id}")
 
 
-def format_confirmation_text(structured_data: dict, user) -> str:
-    """Format the confirmation text with extracted information"""
+def format_confirmation_text(structured_data: dict, user, user_language) -> str:
+    """Format the confirmation text with extracted information - comprehensive version"""
     name = structured_data.get('name', 'Your Name')
-    summary = structured_data.get('summary', 'No summary available')
+    summary = structured_data.get('summary', '')
     skills = structured_data.get('skills', [])
     tools = structured_data.get('tools', [])
     languages = structured_data.get('languages', [])
+    currently_working_on = structured_data.get('currently_working_on', '')
+    currently_learning = structured_data.get('currently_learning', '')
+    open_to = structured_data.get('open_to', '')
+    fun_fact = structured_data.get('fun_fact', '')
     
     # Get user's contact info
     github = user.get_data('github')
@@ -55,36 +70,165 @@ def format_confirmation_text(structured_data: dict, user) -> str:
     portfolio = user.get_data('portfolio')
     email = user.get_data('email')
     
-    confirmation = f"""📋 Review Your Information
-
-Name: {name}
-
-About Me:
-{summary}
-
-Skills ({len(skills)}):
-{', '.join(skills[:10])}{'...' if len(skills) > 10 else ''}
-
-Tools ({len(tools)}):
-{', '.join(tools[:10])}{'...' if len(tools) > 10 else ''}
-
-Languages ({len(languages)}):
-{', '.join(languages[:10])}{'...' if len(languages) > 10 else ''}"""
-
-    if github or linkedin or portfolio or email:
-        confirmation += "\n\nContact Information:\n"
-        if github:
-            confirmation += f"• GitHub: {github}\n"
-        if linkedin:
-            confirmation += f"• LinkedIn: [Profile]({linkedin})\n"
-        if portfolio:
-            confirmation += f"• Portfolio: [Website]({portfolio})\n"
-        if email:
-            confirmation += f"• Email: {email}\n"
+    # Check if Arabic
+    is_arabic = user_language == Language.ARABIC
     
-    confirmation += "\n\nIs this information correct? Choose an option below:"
+    # Build comprehensive confirmation text based on language
+    if is_arabic:
+        confirmation = "📋 **مراجعة المعلومات المستخرجة**\n"
+        confirmation += "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        
+        # Personal Info Section
+        confirmation += "👤 **المعلومات الشخصية:**\n"
+        confirmation += f"• **الاسم:** {name}\n"
+        if github:
+            confirmation += f"• **GitHub:** {github}\n"
+        if linkedin:
+            confirmation += f"• **LinkedIn:** [الملف الشخصي]({linkedin})\n"
+        if portfolio:
+            confirmation += f"• **الموقع:** [زيارة]({portfolio})\n"
+        if email:
+            confirmation += f"• **البريد:** {email}\n"
+        
+        # Summary Section
+        if summary:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += "📝 **نبذة عني:**\n"
+            confirmation += f"{summary}\n"
+        
+        # Programming Languages
+        if languages:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"💻 **لغات البرمجة ({len(languages)}):**\n"
+            confirmation += format_skill_list_improved(languages, is_arabic)
+        
+        # Skills & Technologies  
+        if skills:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"🛠️ **المهارات والتقنيات ({len(skills)}):**\n"
+            confirmation += format_skill_list_improved(skills, is_arabic)
+        
+        # Tools
+        if tools:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"🔧 **الأدوات والمنصات ({len(tools)}):**\n"
+            confirmation += format_skill_list_improved(tools, is_arabic)
+        
+        # Dynamic sections
+        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+        confirmation += "🎯 **معلومات إضافية:**\n"
+        if currently_working_on:
+            confirmation += f"• 🚀 **أعمل حالياً على:** {currently_working_on}\n"
+        if currently_learning:
+            confirmation += f"• 📚 **أتعلم حالياً:** {currently_learning}\n"
+        if open_to:
+            confirmation += f"• 🤝 **مفتوح لـ:** {open_to}\n"
+        if fun_fact:
+            confirmation += f"• ⚡ **حقيقة ممتعة:** {fun_fact}\n"
+        
+        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+        confirmation += "✅ هل هذه المعلومات صحيحة؟ اختر خياراً:"
+        
+    else:
+        confirmation = "📋 **Review Extracted Information**\n"
+        confirmation += "━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        
+        # Personal Info Section
+        confirmation += "👤 **Personal Information:**\n"
+        confirmation += f"• **Name:** {name}\n"
+        if github:
+            confirmation += f"• **GitHub:** {github}\n"
+        if linkedin:
+            confirmation += f"• **LinkedIn:** [Profile]({linkedin})\n"
+        if portfolio:
+            confirmation += f"• **Portfolio:** [Visit]({portfolio})\n"
+        if email:
+            confirmation += f"• **Email:** {email}\n"
+        
+        # Summary Section
+        if summary:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += "📝 **About Me:**\n"
+            confirmation += f"{summary}\n"
+        
+        # Programming Languages
+        if languages:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"💻 **Programming Languages ({len(languages)}):**\n"
+            confirmation += format_skill_list_improved(languages, is_arabic)
+        
+        # Skills & Technologies  
+        if skills:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"🛠️ **Skills & Technologies ({len(skills)}):**\n"
+            confirmation += format_skill_list_improved(skills, is_arabic)
+        
+        # Tools
+        if tools:
+            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            confirmation += f"🔧 **Tools & Platforms ({len(tools)}):**\n"
+            confirmation += format_skill_list_improved(tools, is_arabic)
+        
+        # Dynamic sections
+        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+        confirmation += "🎯 **Additional Information:**\n"
+        if currently_working_on:
+            confirmation += f"• 🚀 **Currently Working On:** {currently_working_on}\n"
+        if currently_learning:
+            confirmation += f"• 📚 **Currently Learning:** {currently_learning}\n"
+        if open_to:
+            confirmation += f"• 🤝 **Open To:** {open_to}\n"
+        if fun_fact:
+            confirmation += f"• ⚡ **Fun Fact:** {fun_fact}\n"
+        
+        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
+        confirmation += "✅ Is this information correct? Choose an option:"
     
     return confirmation
+
+
+def format_skill_list_improved(skills: list, is_arabic: bool = False) -> str:
+    """Format a list of skills for display - improved version"""
+    if not skills:
+        return "لا يوجد" if is_arabic else "None"
+    
+    # Format skills in a clean grid-like display
+    formatted_skills = [skill.title() for skill in skills]
+    
+    # Show all skills, formatted nicely
+    if len(formatted_skills) <= 15:
+        # Show in rows of 3-4 skills
+        rows = []
+        for i in range(0, len(formatted_skills), 4):
+            row_skills = formatted_skills[i:i+4]
+            rows.append("  " + " • ".join(row_skills))
+        return "\n".join(rows)
+    else:
+        # Show first 12 with indicator
+        shown = formatted_skills[:12]
+        remaining = len(formatted_skills) - 12
+        rows = []
+        for i in range(0, len(shown), 4):
+            row_skills = shown[i:i+4]
+            rows.append("  " + " • ".join(row_skills))
+        
+        more_text = f"و {remaining} مهارة أخرى..." if is_arabic else f"... and {remaining} more"
+        rows.append(f"  📌 {more_text}")
+        return "\n".join(rows)
+
+
+def format_skill_list(skills: list) -> str:
+    """Format a list of skills for display - legacy version"""
+    if not skills:
+        return "None"
+    
+    # Show all skills if 10 or less, otherwise show first 10 with indicator
+    if len(skills) <= 10:
+        return ', '.join([f"• {skill.title()}" for skill in skills])
+    else:
+        shown_skills = skills[:10]
+        remaining = len(skills) - 10
+        return ', '.join([f"• {skill.title()}" for skill in shown_skills]) + f"\n• ... and {remaining} more skills"
 
 
 async def approve_readme_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -98,7 +242,7 @@ async def approve_readme_callback(update: Update, context: ContextTypes.DEFAULT_
     conversation_manager.update_user_state(user_id, BotState.COMPLETED)
     
     # Generate and send ZIP file
-    await generate_and_send_zip(update, user_id)
+    await generate_and_send_zip(update, context, user_id)
     
     logger.info(f"User {user_id} approved README generation")
 
@@ -109,23 +253,84 @@ async def edit_skills_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.answer()
     
     user_id = update.effective_user.id
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
     # Move back to text input for editing
     conversation_manager.update_user_state(user_id, BotState.WAITING_TEXT)
     
-    edit_text = """
-✏️ Edit Your Information
-
-Please send me a corrected version of your experience. You can:
-
-🎤 Send a new voice message, or
-📝 Type a text description
-
-Focus on any skills, tools, or languages I might have missed.
-"""
+    edit_text = language_manager.get_text("edit_prompt", user_language)
     
     await query.edit_message_text(edit_text)
     logger.info(f"User {user_id} chose to edit skills")
+
+
+async def edit_contact_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle edit contact information callback"""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
+    
+    # Move to contact editing state
+    conversation_manager.update_user_state(user_id, BotState.WAITING_CONTACT)
+    
+    contact_edit_text = """✏️ **Edit Contact Information**
+
+Please send your updated information in this format:
+
+**Name:** Your Full Name
+**GitHub:** github-username  
+**LinkedIn:** https://linkedin.com/in/your-profile
+**Portfolio:** https://your-website.com
+**Email:** your.email@example.com
+
+You can send only the fields you want to update. For example:
+```
+Name: John Doe
+GitHub: johndoe
+```
+
+Send /cancel to go back."""
+    
+    await query.edit_message_text(contact_edit_text)
+    logger.info(f"User {user_id} chose to edit contact information")
+
+
+async def add_tech_stack_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle add tech stack callback"""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
+    
+    # Move to tech stack adding state
+    conversation_manager.update_user_state(user_id, BotState.WAITING_TECH_STACK)
+    
+    tech_stack_text = """🔧 **Add Tech Stack Items**
+
+Please send additional technologies, tools, or skills you want to add:
+
+**Examples:**
+- Programming languages: python, javascript, typescript, go, rust
+- Frameworks: react, vue, angular, django, flask
+- Tools: docker, kubernetes, git, aws, azure
+- Databases: mysql, postgresql, mongodb, redis
+- Other: power bi, tableau, jupyter
+
+You can send them as a comma-separated list:
+```
+react, typescript, docker, aws, postgresql
+```
+
+Send /cancel to go back."""
+    
+    await query.edit_message_text(tech_stack_text)
+    logger.info(f"User {user_id} chose to add tech stack items")
 
 
 async def regenerate_readme_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -134,11 +339,13 @@ async def regenerate_readme_callback(update: Update, context: ContextTypes.DEFAU
     await query.answer()
     
     user_id = update.effective_user.id
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
     # Move back to processing
     conversation_manager.update_user_state(user_id, BotState.PROCESSING)
     
-    await query.edit_message_text("🔄 Regenerating your README...")
+    await query.edit_message_text(language_manager.get_text("regenerate_message", user_language))
     
     # Re-process the data
     from bot.handlers.voice_handler import process_user_data
@@ -153,23 +360,19 @@ async def cancel_readme_callback(update: Update, context: ContextTypes.DEFAULT_T
     await query.answer()
     
     user_id = update.effective_user.id
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
     # Clear user data
     conversation_manager.clear_user(user_id)
     
-    cancel_text = """
-❌ README Generation Cancelled
-
-Your session has been cleared. 
-
-If you'd like to try again, just send /start to begin a new conversation!
-"""
+    cancel_text = language_manager.get_text("cancel_message", user_language)
     
     await query.edit_message_text(cancel_text)
     logger.info(f"User {user_id} cancelled README generation")
 
 
-async def generate_and_send_zip(update: Update, user_id: int):
+async def generate_and_send_zip(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
     """Generate ZIP file with README and send to user"""
     try:
         user = conversation_manager.get_user(user_id)
@@ -190,35 +393,117 @@ async def generate_and_send_zip(update: Update, user_id: int):
             # Add README.md
             zip_file.writestr("README.md", readme_content.encode('utf-8'))
             
-            # Add instructions file
-            instructions = generate_instructions(structured_data, user)
-            zip_file.writestr("INSTRUCTIONS.md", instructions.encode('utf-8'))
+            # Add snake.yml workflow file
+            snake_workflow = """name: Generate snake animation
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  generate:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate snake animation
+        uses: Platane/snk@v3
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: |
+            dist/snake.svg
+            dist/snake-dark.svg?palette=github-dark
+            dist/snake.gif?color_snake=orange&color_dots=#bfd6f6,#8dbdff,#64a1f4,#4b91f1,#3c7dd9
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to output branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: output
+          publish_dir: ./dist
+          force_orphan: true"""
+            
+            zip_file.writestr(".github/workflows/snake.yml", snake_workflow.encode('utf-8'))
         
         zip_buffer.seek(0)
         
         # Create filename using github username 
-        name = user.get_data('github')
-        filename = f"{name}_README.zip"
+        user_name = user.get_data('github')
+        filename = f"{user_name}.zip"
         
         # Send ZIP file - handle both callback query and regular message
         message_target = update.callback_query.message if hasattr(update, 'callback_query') and update.callback_query else update.message
         
+        # Get user language preference
+        user_language_code = conversation_manager.get_user_language(user_id)
+        user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
+        
+        # Bilingual caption with support link
+        if user_language == Language.ARABIC:
+            caption = f"""🎉 ملف README جاهز!
+
+📁 `{filename}` يحتوي على:
+• README.md - ملفك الاحترافي
+• .github/workflows/snake.yml - ملف سنيك أنيميشن
+
+📋 الخطوات التالية:
+1. استخرج ملف ZIP
+2. خصص README إذا لزم الأمر
+3. أضفه إلى مستودع GitHub الخاص بك
+4. حدث روابط الاتصال
+5. فعل سنيك أنيميشن من Actions
+
+🐍 تفعيل السنيك:
+اذهب إلى Actions > Enable Actions
+
+💝 دعم المطور:
+إذا أعجبتك الخدمة، يمكنك دعم التطوير عبر:
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
+
+كل دعم يقدر ويساعدنا على تقديم خدمة أفضل! 🙏"""
+        else:
+            caption = f"""🎉 Your README is ready!
+
+📁 `{filename}` contains:
+• README.md - Your professional profile
+• .github/workflows/snake.yml - Snake animation workflow
+
+📋 Next Steps:
+1. Extract the ZIP file
+2. Customize the README if needed
+3. Add it to your GitHub repository
+4. Update the contact links
+5. Enable snake animation from Actions
+
+🐍 Activate Snake:
+Go to Actions > Enable Actions
+
+💝 Support the Developer:
+If you liked the service, you can support development via:
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
+
+Every support is appreciated and helps us provide better service! 🙏"""
+        
         await message_target.reply_document(
             document=InputFile(zip_buffer, filename=filename),
-            caption=f"🎉 Your README is ready!\n\n"
-                   f"📁 `{filename}` contains:\n"
-                   f"• README.md - Your professional profile\n"
-                   f"• INSTRUCTIONS.md - Setup guide\n\n"
-                   f"📋 Next Steps:\n"
-                   f"1. Extract the ZIP file\n"
-                   f"2. Customize the README if needed\n"
-                   f"3. Add it to your GitHub repository\n"
-                   f"4. Update the contact links\n\n"
-                   f"⭐ Don't forget to star this bot if it helped you!",
+            caption=caption,
             parse_mode='Markdown'
         )
         
         logger.info(f"Successfully sent ZIP file to user {user_id}")
+        
+        # Show rating prompt after successful delivery
+        await show_rating_prompt(update, context)
         
     except Exception as e:
         logger.error(f"Error generating ZIP file: {e}")
@@ -228,79 +513,3 @@ async def generate_and_send_zip(update: Update, user_id: int):
             "❌ An error occurred while generating your ZIP file. "
             "Please try again or contact support."
         )
-
-
-def generate_instructions(structured_data: dict, user) -> str:
-    """Generate instructions file for the ZIP"""
-    name = structured_data.get('name', 'Your Name')
-    github = user.get_data('github')
-    linkedin = user.get_data('linkedin')
-    portfolio = user.get_data('portfolio')
-    email = user.get_data('email')
-    
-    instructions = f"""# README Setup Instructions
-
-## 🎉 Your README is ready!
-
-This README.md file has been generated based on your profile information. Here's how to set it up:
-
-## 📋 Customization Required
-
-### 1. Update Contact Information
-
-Edit the "Connect With Me" section in README.md:
-
-```markdown
-## 🤝 Connect With Me
-
-[![GitHub](https://img.shields.io/badge/GitHub-{github or 'yourusername'}-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/{github or 'yourusername'}){'[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](' + linkedin + ')' if linkedin else ''}{'[![Email](https://img.shields.io/badge/Email-Contact%20Me-red?style=for-the-badge&logo=gmail)](mailto:' + email + ')' if email else ''}{'[![Portfolio](https://img.shields.io/badge/Portfolio-Visit-FF5722?style=for-the-badge&logo=todoist&logoColor=white)](' + portfolio + ')' if portfolio else ''}
-```
-
-### 2. Add Profile Badges (Optional)
-
-Add these badges at the top of your README for more visibility:
-
-```markdown
-[![Profile Views](https://komarev.com/ghpvc/?username={github or 'yourusername'}&label=Profile%20views&color=0e75b6&style=flat)](https://github.com/{github or 'yourusername'})
-[![GitHub Followers](https://img.shields.io/github/followers/{github or 'yourusername'}?style=social)](https://github.com/{github or 'yourusername'})
-```
-
-### 3. Add GitHub Stats (Optional)
-
-If you want to include GitHub statistics, add this section:
-
-```markdown
-## 📊 GitHub Stats
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username={github or 'yourusername'}&show_icons=true&theme=radical)
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username={github or 'yourusername'}&layout=compact&theme=radical)
-```
-
-## 🚀 How to Use
-
-1. **Copy** the README.md file to your GitHub repository root
-2. **Edit** the contact links with your actual information
-3. **Commit** and push to your repository
-4. **View** your beautiful new README on GitHub!
-
-## 💡 Tips
-
-- The Devicon icons will automatically load from CDN
-- You can customize colors, emojis, and sections as needed
-- Consider adding project examples or achievements
-- Keep your README updated with new skills and experiences
-
-## 📞 Need Help?
-
-If you need assistance with customization or have questions:
-- Check GitHub's README documentation
-- Look at other developers' READMEs for inspiration
-- Use GitHub Markdown preview to test changes
-
----
-
-Generated by GitHub README Bot 🤖
-Generated on: {user.get_data('generated_date', 'Today')}
-"""
-    
-    return instructions

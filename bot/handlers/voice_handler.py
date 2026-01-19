@@ -8,6 +8,7 @@ from services.prompt_engine import PromptEngine
 from utils.markdown import MarkdownGenerator
 from utils.validators import Validators
 from utils.logger import Logger
+from utils.language import language_manager, Language
 from bot.states import BotState, conversation_manager
 from bot.handlers.confirm_handler import show_confirmation
 
@@ -19,15 +20,17 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle voice messages and process them"""
     user_id = update.effective_user.id
     user = conversation_manager.get_user(user_id)
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
     # Only handle voice messages when waiting for experience
     if user.state != BotState.WAITING_VOICE:
-        await update.message.reply_text("Please complete the previous steps first. Use /start to begin.")
+        await update.message.reply_text(language_manager.get_text("please_complete_previous_steps", user_language, default="Please complete the previous steps first. Use /start to begin."))
         return
     
     try:
         # Send processing message
-        await update.message.reply_text("🎤 Processing your voice message...")
+        await update.message.reply_text(language_manager.get_text("processing_voice_message", user_language, default="🎤 Processing your voice message..."))
         
         # Get voice file
         voice_file = await update.message.voice.get_file()
@@ -52,12 +55,13 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await start_processing(update, user_id)
             else:
                 await update.message.reply_text(
-                    "❌ Sorry, I couldn't understand your voice message. "
-                    "This could be due to:\n"
-                    "• Poor audio quality\n"
-                    "• Background noise\n"
-                    "• Unsupported audio format\n\n"
-                    "Please try again speaking clearly or type your experience instead."
+                    language_manager.get_text("voice_transcription_failed", user_language, default="""❌ Sorry, I couldn't understand your voice message. 
+This could be due to:
+• Poor audio quality
+• Background noise
+• Unsupported audio format
+
+Please try again speaking clearly or type your experience instead.""")
                 )
                 
         finally:
@@ -70,7 +74,7 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
     except Exception as e:
         logger.error(f"Error in voice_handler: {e}")
-        await update.message.reply_text("❌ An error occurred while processing your voice message")
+        await update.message.reply_text(language_manager.get_text("voice_processing_error", user_language, default="❌ An error occurred while processing your voice message"))
 
 
 async def transcribe_audio(audio_file_path: str) -> str:
@@ -98,11 +102,13 @@ async def process_user_data(update: Update, user_id: int):
     """Process collected user data and generate README"""
     try:
         user = conversation_manager.get_user(user_id)
+        user_language_code = conversation_manager.get_user_language(user_id)
+        user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
         
         # Get experience text
         experience_text = user.get_data('experience_text')
         if not experience_text:
-            await update.message.reply_text("❌ No experience data found. Please try again.")
+            await update.message.reply_text(language_manager.get_text("no_experience_data", user_language, default="❌ No experience data found. Please try again."))
             return
         
         # Get LLM provider
@@ -114,8 +120,7 @@ async def process_user_data(update: Update, user_id: int):
         
         if not structured_data:
             await update.message.reply_text(
-                "❌ I couldn't extract structured information from your input. "
-                "Please provide more details about your skills and experience."
+                language_manager.get_text("structured_extraction_failed", user_language, default="❌ I couldn't extract structured information from your input. Please provide more details about your skills and experience.")
             )
             return
         
@@ -171,17 +176,18 @@ async def process_user_data(update: Update, user_id: int):
     except Exception as e:
         logger.error(f"Error processing user data: {e}")
         await update.message.reply_text(
-            "❌ An error occurred while processing your information. "
-            "Please try again or contact support."
+            language_manager.get_text("processing_error", user_language, default="❌ An error occurred while processing your information. Please try again or contact support.")
         )
 
 
 async def start_processing(update: Update, user_id: int):
     """Start processing the collected information"""
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
+    
     conversation_manager.update_user_state(user_id, BotState.PROCESSING)
     
-    processing_text = """
-🔄 Processing your information
+    processing_text = language_manager.get_text("processing_information", user_language, default="""🔄 Processing your information
 
 I'm analyzing your experience and extracting:
 • Technical skills
@@ -189,8 +195,7 @@ I'm analyzing your experience and extracting:
 • Tools and platforms
 • Professional summary
 
-This will take a few moments
-"""
+This will take a few moments""")
     
     await update.message.reply_text(processing_text)
     logger.info(f"User {user_id} moved to processing state")
