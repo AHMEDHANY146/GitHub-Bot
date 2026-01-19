@@ -29,16 +29,6 @@ class MarkdownGenerator:
         # Header with badges
         sections.append(self._generate_modern_header(structured_data))
         
-        # Contact Info section (LinkedIn, Email) - moved to top
-        contact_section = self._generate_contact_section(structured_data)
-        if contact_section:
-            sections.append(contact_section)
-        
-        # Features/Flowers section - moved to top
-        features_section = self._generate_features_section(structured_data)
-        if features_section:
-            sections.append(features_section)
-        
         # About Me section with gif
         if structured_data.get('summary'):
             sections.append(self._generate_modern_about_section(structured_data))
@@ -48,7 +38,7 @@ class MarkdownGenerator:
             sections.append(self._generate_programming_languages_section(structured_data['languages']))
         
         if structured_data.get('skills'):
-            sections.append(self._generate_data_science_section(structured_data['skills']))
+            sections.append(self._generate_skills_section(structured_data['skills']))
         
         if structured_data.get('tools'):
             sections.append(self._generate_tools_section(structured_data['tools']))
@@ -65,12 +55,7 @@ class MarkdownGenerator:
     
     def _generate_modern_header(self, structured_data: Dict[str, any]) -> str:
         """Generate modern README header with badges and alignment"""
-        name = structured_data.get('name', 'Your Name')
         github_username = structured_data.get('github', '')
-        
-        # GitHub username is now required for profile generation
-        if not github_username:
-            github_username = 'yourusername'  # fallback
         
         # Create a professional subtitle based on skills
         subtitle = self._generate_subtitle(structured_data)
@@ -132,62 +117,19 @@ class MarkdownGenerator:
         
         return '\n'.join(badges)
     
-    def _generate_contact_section(self, structured_data: Dict[str, any]) -> str:
-        """Generate Contact Info section with LinkedIn and Email at the top"""
-        linkedin_url = structured_data.get('linkedin', '')
-        email = structured_data.get('email', '')
         
-        if not linkedin_url and not email:
-            return ""
-        
-        contact_items = []
-        
-        if linkedin_url:
-            contact_items.append(f'  - [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin&logoColor=white)]({linkedin_url})')
-        
-        if email:
-            contact_items.append(f'  - [![Email](https://img.shields.io/badge/Email-Contact%20Me-red?style=flat&logo=gmail)](mailto:{email})')
-        
-        return f"""## 📬 Get In Touch
-
-<div align="left">
-
-{chr(10).join(contact_items)}
-
-</div>"""
-    
-    def _generate_features_section(self, structured_data: Dict[str, any]) -> str:
-        """Generate Features section with AI-powered dynamic content"""
-        # Use AI to generate personalized features
-        ai_features = self._generate_ai_features(structured_data)
-        
-        if ai_features:
-            return f"""## � Features & Achievements
-
-<div align="left">
-
-{ai_features}
-
-</div>"""
-        else:
-            # Fallback to basic features if AI is not available
-            return ""
-    
     def _generate_modern_about_section(self, structured_data: Dict[str, any]) -> str:
         """Generate modern About Me section without images"""
         summary = structured_data.get('summary', '')
         email = structured_data.get('email', '')
-        name = structured_data.get('name', 'there')
-        skills = structured_data.get('skills', [])
-        languages = structured_data.get('languages', [])
         
         # Build the reach me line only if email is provided
         reach_me_line = ""
         if email:
             reach_me_line = f"  - 📫 **Reach me at:** {email}"
         
-        # Add personal touch with name
-        personal_intro = f"## 👋 About {name.split()[0] if name else 'Me'}" if name else "## 👋 About Me"
+        # Use generic About Me title
+        personal_intro = "## 👋 About Me"
         
         # Generate dynamic content based on user profile
         dynamic_content = self._generate_dynamic_about_content(structured_data)
@@ -231,40 +173,127 @@ class MarkdownGenerator:
 {languages_text}
 </div>"""
     
-    def _generate_data_science_section(self, skills: List[str]) -> str:
-        """Generate Data Science & ML section with icons"""
-        # Filter for data science related skills
-        ds_skills = [skill for skill in skills if any(keyword in skill.lower() 
-                   for keyword in ['data', 'machine', 'learning', 'ai', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit'])]
-        
-        if not ds_skills:
+    def _generate_skills_section(self, skills: List[str]) -> str:
+        """Generate Skills section with proper categorization and icons"""
+        if not skills:
             return ""
         
-        valid_skills = self.devicon_resolver.filter_valid_skills(ds_skills)
-        skill_icons = self.devicon_resolver.get_skill_icons(valid_skills)
+        # Categorize skills
+        web_dev_skills = []
+        data_science_skills = []
+        backend_skills = []
+        other_skills = []
         
-        if not skill_icons:
-            return "### 📊 Data Science & ML\n" + ', '.join(ds_skills)
-        
-        # Generate skill entries with icons
-        skill_entries = []
-        for skill in valid_skills:
-            icon_url = skill_icons.get(skill)
-            if icon_url:
-                skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill}" />')
+        for skill in skills:
+            skill_lower = skill.lower()
+            if any(keyword in skill_lower for keyword in ['html', 'css', 'javascript', 'react', 'vue', 'angular', 'web', 'frontend']):
+                web_dev_skills.append(skill)
+            elif any(keyword in skill_lower for keyword in ['data', 'machine', 'learning', 'ai', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit']):
+                data_science_skills.append(skill)
+            elif any(keyword in skill_lower for keyword in ['backend', 'server', 'api', 'database', 'postgres', 'mysql', 'mongodb']):
+                backend_skills.append(skill)
             else:
-                skill_entries.append(f'  <strong>{skill.title()}</strong>')
+                other_skills.append(skill)
         
-        # Add some common data science logos that might not be in devicon
-        if 'scikit-learn' in ds_skills or 'sklearn' in ds_skills:
-            skill_entries.append('  <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg" height="40" alt="scikit-learn logo" title="scikit-learn" />')
+        sections = []
         
-        skills_text = '\n'.join(skill_entries)
-        return f"""### 📊 Data Science & ML
+        # Generate Web Development section
+        if web_dev_skills:
+            valid_skills = self.devicon_resolver.filter_valid_skills(web_dev_skills)
+            skill_icons = self.devicon_resolver.get_skill_icons(valid_skills)
+            
+            if skill_icons:
+                skill_entries = []
+                for skill in valid_skills:
+                    icon_url = skill_icons.get(skill)
+                    if icon_url:
+                        skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill}" />')
+                    else:
+                        skill_entries.append(f'  <strong>{skill.title()}</strong>')
+                
+                skills_text = '\n'.join(skill_entries)
+                sections.append(f"""### 🌐 Web Development
 
 <div align="left">
 {skills_text}
-</div>"""
+</div>""")
+            else:
+                sections.append(f"### 🌐 Web Development\n{', '.join(web_dev_skills)}")
+        
+        # Generate Data Science & ML section
+        if data_science_skills:
+            valid_skills = self.devicon_resolver.filter_valid_skills(data_science_skills)
+            skill_icons = self.devicon_resolver.get_skill_icons(valid_skills)
+            
+            if skill_icons:
+                skill_entries = []
+                for skill in valid_skills:
+                    icon_url = skill_icons.get(skill)
+                    if icon_url:
+                        skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill}" />')
+                    else:
+                        skill_entries.append(f'  <strong>{skill.title()}</strong>')
+                
+                # Add some common data science logos that might not be in devicon
+                if any('scikit' in skill.lower() or 'sklearn' in skill.lower() for skill in data_science_skills):
+                    skill_entries.append('  <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg" height="40" alt="scikit-learn logo" title="scikit-learn" />')
+                
+                skills_text = '\n'.join(skill_entries)
+                sections.append(f"""### 📊 Data Science & ML
+
+<div align="left">
+{skills_text}
+</div>""")
+            else:
+                sections.append(f"### 📊 Data Science & ML\n{', '.join(data_science_skills)}")
+        
+        # Generate Backend section
+        if backend_skills:
+            valid_skills = self.devicon_resolver.filter_valid_skills(backend_skills)
+            skill_icons = self.devicon_resolver.get_skill_icons(valid_skills)
+            
+            if skill_icons:
+                skill_entries = []
+                for skill in valid_skills:
+                    icon_url = skill_icons.get(skill)
+                    if icon_url:
+                        skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill}" />')
+                    else:
+                        skill_entries.append(f'  <strong>{skill.title()}</strong>')
+                
+                skills_text = '\n'.join(skill_entries)
+                sections.append(f"""### ⚙️ Backend Development
+
+<div align="left">
+{skills_text}
+</div>""")
+            else:
+                sections.append(f"### ⚙️ Backend Development\n{', '.join(backend_skills)}")
+        
+        # Generate Other Skills section
+        if other_skills:
+            valid_skills = self.devicon_resolver.filter_valid_skills(other_skills)
+            skill_icons = self.devicon_resolver.get_skill_icons(valid_skills)
+            
+            if skill_icons:
+                skill_entries = []
+                for skill in valid_skills:
+                    icon_url = skill_icons.get(skill)
+                    if icon_url:
+                        skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill}" />')
+                    else:
+                        skill_entries.append(f'  <strong>{skill.title()}</strong>')
+                
+                skills_text = '\n'.join(skill_entries)
+                sections.append(f"""### 🎯 Other Skills
+
+<div align="left">
+{skills_text}
+</div>""")
+            else:
+                sections.append(f"### 🎯 Other Skills\n{', '.join(other_skills)}")
+        
+        return '\n\n'.join(sections) if sections else ""
     
     def _generate_tools_section(self, tools: List[str]) -> str:
         """Generate Tools & Technologies section with icons"""
@@ -342,30 +371,10 @@ class MarkdownGenerator:
 </div>"""
     
     def _generate_profile_header(self, structured_data: Dict[str, any], github_username: str) -> str:
-        """Generate different profile header styles"""
+        """Generate standardized modern profile header"""
         name = structured_data.get('name', 'Your Name')
-        style = structured_data.get('profile_style', 'modern')  # default style
         
-        if style == 'minimal':
-            return f"""# {name}
-
-<p align="center">Software Developer</p>"""
-        
-        elif style == 'bold':
-            return f"""<h1 align="center"><strong>{name}</strong></h1>
-
-<p align="center">🚀 Full Stack Developer | 💻 Problem Solver</p>"""
-        
-        elif style == 'creative':
-            return f"""<div align="center">
-  <h1>{name}</h1>
-  <p>💡 Turning ideas into reality, one line of code at a time</p>
-</div>"""
-        
-        else:  # modern (default)
-            return f"""<h1 align="center">Hi there, I'm {name} 👋</h1>
-
-<p align="center">Passionate developer building amazing things</p>"""
+        return f"""<h1 align="center">Hi there, I'm {name} 👋</h1>"""
     
     def _get_current_date(self) -> str:
         """Get current date in YYYY-MM-DD format"""
@@ -429,43 +438,7 @@ Format each bullet point with "  - " at the start."""
         
         return '\n'.join(content) if content else "  - 👨‍💻 **Passionate developer** creating amazing things"
     
-    def _generate_ai_features(self, structured_data: Dict[str, any]) -> str:
-        """Generate AI-powered features and achievements"""
-        if not self.llm_provider:
-            return None
         
-        name = structured_data.get('name', 'Developer')
-        skills = structured_data.get('skills', [])
-        languages = structured_data.get('languages', [])
-        summary = structured_data.get('summary', '')
-        
-        prompt = f"""Generate a personalized "Features & Achievements" section for a developer's GitHub README.
-
-Name: {name}
-Skills: {', '.join(skills) if skills else 'Not specified'}
-Programming Languages: {', '.join(languages) if languages else 'Not specified'}
-Summary: {summary}
-
-Requirements:
-- Write in a professional yet friendly tone
-- Include 3-4 bullet points highlighting their key features and achievements
-- Use flower emojis at the beginning of each point
-- Make it unique and personal based on their profile
-- Keep it concise (under 120 words total)
-- Focus on their strengths and expertise
-- Write in English
-
-Format each bullet point with "  - " at the start, followed by a flower emoji and bold feature title."""
-
-        try:
-            response = self.llm_provider.generate_text(prompt, [], max_output_tokens=200, temperature=0.8)
-            if response and isinstance(response, str):
-                return response.strip()
-        except Exception as e:
-            print(f"Error generating AI features: {e}")
-        
-        return None
-    
     def _generate_ai_subtitle(self, structured_data: Dict[str, any]) -> str:
         """Generate AI-powered professional subtitle"""
         if not self.llm_provider:

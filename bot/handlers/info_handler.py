@@ -71,53 +71,18 @@ async def handle_github_input(update: Update, github: str):
     # Save GitHub username
     conversation_manager.add_user_data(user_id, 'github', github)
     
-    # Ask for profile style
-    conversation_manager.update_user_state(user_id, BotState.WAITING_PROFILE_STYLE)
-    
-    keyboard = [
-        [InlineKeyboardButton("🎯 Modern", callback_data="style_modern")],
-        [InlineKeyboardButton("⚡ Minimal", callback_data="style_minimal")],
-        [InlineKeyboardButton("🔥 Bold", callback_data="style_bold")],
-        [InlineKeyboardButton("💡 Creative", callback_data="style_creative")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    await update.message.reply_text(
-        f"✅ GitHub username saved: {github}\n\n"
-        "Choose your profile style:",
-        reply_markup=reply_markup
-    )
-    logger.info(f"User {user_id} provided GitHub: {github}")
-
-
-async def handle_profile_style_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle profile style selection"""
-    query = update.callback_query
-    await query.answer()
-    
-    user_id = update.effective_user.id
-    style_map = {
-        "style_modern": "modern",
-        "style_minimal": "minimal", 
-        "style_bold": "bold",
-        "style_creative": "creative"
-    }
-    
-    selected_style = style_map.get(query.data, "modern")
-    conversation_manager.add_user_data(user_id, 'profile_style', selected_style)
-    
-    # Ask for LinkedIn
+    # Ask for LinkedIn (skip profile style selection)
     conversation_manager.update_user_state(user_id, BotState.WAITING_LINKEDIN)
     
     keyboard = [[InlineKeyboardButton("⏭️ Skip", callback_data="skip_linkedin")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await query.edit_message_text(
-        f"✅ Profile style selected: {selected_style.title()}\n\n"
+    await update.message.reply_text(
+        f"✅ GitHub username saved: {github}\n\n"
         "What's your LinkedIn profile URL? (optional)",
         reply_markup=reply_markup
     )
-    logger.info(f"User {user_id} selected profile style: {selected_style}")
+    logger.info(f"User {user_id} provided GitHub: {github}")
 
 
 async def handle_linkedin_input(update: Update, linkedin: str):

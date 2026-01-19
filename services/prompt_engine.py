@@ -156,6 +156,9 @@ Special Instructions:
 - For data science profiles, emphasize ML/AI focus
 - Use dark theme for GitHub stats
 - Include proper HTML div structure
+- CRITICAL: Never include Arabic text or any non-English introductions in the About Me section
+- CRITICAL: Never include prefixes like "Here's a personalized 'About Me' section for [Name]'s GitHub README:"
+- Generate clean, direct About Me content starting immediately with the introduction
 
 Generate only the README content, no explanations.
 """

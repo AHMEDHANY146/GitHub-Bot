@@ -1,7 +1,7 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import filters
 from bot.handlers.start_handler import start_handler, help_callback, start_collection_callback
-from bot.handlers.info_handler import handle_text_input, skip_field_callback, handle_profile_style_callback
+from bot.handlers.info_handler import handle_text_input, skip_field_callback
 from bot.handlers.voice_handler import voice_handler
 from bot.handlers.confirm_handler import (
     approve_readme_callback, 
@@ -26,7 +26,6 @@ def setup_handlers(application: Application):
     application.add_handler(CallbackQueryHandler(help_callback, pattern="^show_help$"))
     application.add_handler(CallbackQueryHandler(start_collection_callback, pattern="^start_collection$"))
     application.add_handler(CallbackQueryHandler(skip_field_callback, pattern="^skip_"))
-    application.add_handler(CallbackQueryHandler(handle_profile_style_callback, pattern="^style_"))
     application.add_handler(CallbackQueryHandler(approve_readme_callback, pattern="^approve_readme$"))
     application.add_handler(CallbackQueryHandler(edit_skills_callback, pattern="^edit_skills$"))
     application.add_handler(CallbackQueryHandler(regenerate_readme_callback, pattern="^regenerate_readme$"))

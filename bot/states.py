@@ -10,7 +10,6 @@ class BotState(Enum):
     COLLECTING_INFO = "collecting_info"
     WAITING_NAME = "waiting_name"
     WAITING_GITHUB = "waiting_github"
-    WAITING_PROFILE_STYLE = "waiting_profile_style"
     WAITING_LINKEDIN = "waiting_linkedin"
     WAITING_PORTFOLIO = "waiting_portfolio"
     WAITING_EMAIL = "waiting_email"
