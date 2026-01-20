@@ -21,7 +21,8 @@ async def show_language_selection(update: Update, context: ContextTypes.DEFAULT_
     keyboard = [
         [
             InlineKeyboardButton("🇺🇸 English", callback_data="lang_en"),
-            InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar")
+            InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar"),
+            InlineKeyboardButton("🇪🇬 مصري", callback_data="lang_masri")
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -46,7 +47,12 @@ async def language_selection_callback(update: Update, context: ContextTypes.DEFA
     language_code = query.data.replace("lang_", "")
     
     # Convert to Language enum
-    selected_language = Language.ENGLISH if language_code == "en" else Language.ARABIC
+    if language_code == "en":
+        selected_language = Language.ENGLISH
+    elif language_code == "masri":
+        selected_language = Language.EGYPTIAN
+    else:
+        selected_language = Language.ARABIC
     
     # Save user's language preference
     conversation_manager.add_user_data(user_id, 'language', language_code)
@@ -57,20 +63,52 @@ async def language_selection_callback(update: Update, context: ContextTypes.DEFA
     # Get user's name for personalized welcome
     user_name = update.effective_user.first_name or "there"
     
-    # Send welcome message in selected language
-    welcome_text = language_manager.get_text("welcome_message", selected_language, name=user_name)
+    # CHECK DB FOR EXISTING USER DATA
+    from bot.db_helper import get_user
+    db_user = get_user(user_id)
     
-    # Create action buttons
-    keyboard = [
-        [InlineKeyboardButton(
-            language_manager.get_text("lets_start_button", selected_language), 
-            callback_data="start_collection"
-        )],
-        [InlineKeyboardButton(
-            language_manager.get_text("how_it_works_button", selected_language), 
-            callback_data="show_help"
-        )]
-    ]
+    if db_user:
+        # Load data into conversation manager
+        conversation_manager.add_user_data(user_id, 'name', db_user['name'])
+        conversation_manager.add_user_data(user_id, 'github', db_user['github'])
+        if db_user.get('linkedin'):
+            conversation_manager.add_user_data(user_id, 'linkedin', db_user['linkedin'])
+        if db_user.get('portfolio'):
+            conversation_manager.add_user_data(user_id, 'portfolio', db_user['portfolio'])
+        if db_user.get('email'):
+            conversation_manager.add_user_data(user_id, 'email', db_user['email'])
+            
+        # Skip info collection and go straight to experience
+        # Send welcome message but with "Welcome back" context
+        welcome_text = language_manager.get_text("welcome_message", selected_language, name=db_user['name'])
+        
+        # Change button to "Create New README" or similar context
+        keyboard = [
+            [InlineKeyboardButton(
+                language_manager.get_text("lets_start_button", selected_language), 
+                callback_data="start_collection"
+            )],
+            [InlineKeyboardButton(
+                language_manager.get_text("how_it_works_button", selected_language), 
+                callback_data="show_help"
+            )]
+        ]
+        
+    else:
+        # New user flow
+        welcome_text = language_manager.get_text("welcome_message", selected_language, name=user_name)
+        
+        keyboard = [
+            [InlineKeyboardButton(
+                language_manager.get_text("lets_start_button", selected_language), 
+                callback_data="start_collection"
+            )],
+            [InlineKeyboardButton(
+                language_manager.get_text("how_it_works_button", selected_language), 
+                callback_data="show_help"
+            )]
+        ]
+        
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await query.edit_message_text(welcome_text, reply_markup=reply_markup)

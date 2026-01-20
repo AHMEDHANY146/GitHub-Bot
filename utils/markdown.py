@@ -60,14 +60,6 @@ class MarkdownGenerator:
         if unique_skills:
             sections.append(self._generate_skills_section(unique_skills))
         
-        # GitHub Stats section (GitHub username is now required)
-        if structured_data.get('github'):
-            sections.append(self._generate_github_stats_section(structured_data))
-        
-        # Snake animation (GitHub username is now required)
-        if structured_data.get('github'):
-            sections.append(self._generate_snake_animation(structured_data))
-        
         return '\n\n'.join(sections)
     
     def _generate_modern_header(self, structured_data: Dict[str, any]) -> str:

@@ -21,6 +21,7 @@ class BotState(Enum):
     WAITING_TECH_STACK = "waiting_tech_stack"
     PROCESSING = "processing"
     CONFIRMATION = "confirmation"
+    WAITING_GITHUB_TOKEN = "waiting_github_token"
     COMPLETED = "completed"
 
 

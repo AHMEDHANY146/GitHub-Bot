@@ -10,6 +10,7 @@ from utils.logger import Logger
 from bot.handlers import voice_handler
 from bot.handlers.rating_handler import show_rating_prompt
 from utils.language import Language
+from bot.db_helper import save_user, create_readme_session, complete_readme_session
 
 logger = Logger.get_logger(__name__)
 
@@ -24,9 +25,11 @@ async def show_confirmation(update: Update, user_id: int):
     confirmation_text = format_confirmation_text(structured_data, user, user_language)
     
     # Create inline keyboard for confirmation with more editing options
-    # Get bilingual button texts
-    edit_contact_text = "✏️ تعديل الاسم/الروابط" if user_language == Language.ARABIC else "✏️ Edit Name/Links"
-    add_tech_text = "🔧 إضافة تقنيات" if user_language == Language.ARABIC else "🔧 Add Tech Stack"
+    # Get bilingual button texts (Masri uses Arabic text for buttons mostly)
+    is_ar_or_masri = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
+    
+    edit_contact_text = "✏️ تعديل الاسم/الروابط" if is_ar_or_masri else "✏️ Edit Name/Links"
+    add_tech_text = "🔧 إضافة تقنيات" if is_ar_or_masri else "🔧 Add Tech Stack"
     
     keyboard = [
         [
@@ -70,8 +73,8 @@ def format_confirmation_text(structured_data: dict, user, user_language) -> str:
     portfolio = user.get_data('portfolio')
     email = user.get_data('email')
     
-    # Check if Arabic
-    is_arabic = user_language == Language.ARABIC
+    # Check if Arabic or Masri
+    is_arabic = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
     
     # Build comprehensive confirmation text based on language
     if is_arabic:
@@ -127,7 +130,9 @@ def format_confirmation_text(structured_data: dict, user, user_language) -> str:
             confirmation += f"• ⚡ **حقيقة ممتعة:** {fun_fact}\n"
         
         confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-        confirmation += "✅ هل هذه المعلومات صحيحة؟ اختر خياراً:"
+        # Using specific dialect prompt if available, otherwise generic Arabic
+        prompt_text = language_manager.get_text("confirmation_prompt", user_language)
+        confirmation += f"✅ {prompt_text}"
         
     else:
         confirmation = "📋 **Review Extracted Information**\n"
@@ -386,6 +391,33 @@ async def generate_and_send_zip(update: Update, context: ContextTypes.DEFAULT_TY
                 await update.message.reply_text("❌ No README content found.")
             return
         
+        # Save to database
+        telegram_id = update.effective_user.id
+        
+        # Update user info in database
+        save_user(
+            telegram_id=telegram_id,
+            name=user.get_data('name'),
+            github_username=user.get_data('github'),
+            linkedin_url=user.get_data('linkedin'),
+            portfolio_url=user.get_data('portfolio'),
+            email=user.get_data('email')
+        )
+        
+        # Create session and save skills
+        session_id = create_readme_session(telegram_id, user.get_data('raw_input_text'))
+        if session_id:
+            # Collect all skills
+            all_skills = []
+            all_skills.extend(structured_data.get('languages', []))
+            all_skills.extend(structured_data.get('skills', []))
+            all_skills.extend(structured_data.get('tools', []))
+            
+            complete_readme_session(session_id, readme_content, structured_data, all_skills)
+            
+            # Store session_id for rating
+            context.user_data['session_id'] = session_id
+        
         # Create ZIP file in memory
         zip_buffer = BytesIO()
         
@@ -449,61 +481,76 @@ jobs:
         user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
         
         # Bilingual caption with support link
-        if user_language == Language.ARABIC:
-            caption = f"""🎉 ملف README جاهز!
+        if user_language == Language.ARABIC or user_language == Language.EGYPTIAN:
+            caption = f"""🎉 **ملفك جاهز!** `{filename}`
 
-📁 `{filename}` يحتوي على:
-• README.md - ملفك الاحترافي
-• .github/workflows/snake.yml - ملف سنيك أنيميشن
+👇 **خطوات التثبيت اليدوي:**
 
-📋 الخطوات التالية:
-1. استخرج ملف ZIP
-2. خصص README إذا لزم الأمر
-3. أضفه إلى مستودع GitHub الخاص بك
-4. حدث روابط الاتصال
-5. فعل سنيك أنيميشن من Actions
+1️⃣ **إنشاء المستودع (هام جدًا):**
+• سمِّه بنفس **اسم المستخدم** ({user.get_data('github')}).
+• اجعله **Public**.
 
-🐍 تفعيل السنيك:
-اذهب إلى Actions > Enable Actions
+2️⃣ **رفع الملفات:**
+• فك الضغط وارفع الكل (خاصة مجلد `.github`).
+• `README.md` في الواجهة.
 
-💝 دعم المطور:
-إذا أعجبتك الخدمة، يمكنك دعم التطوير عبر:
-https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
+3️⃣ **تفعيل السنيك (Snake 🐍):**
+• Settings > Actions > General
+• اختر **Read and write permissions** واحفظ.
 
-كل دعم يقدر ويساعدنا على تقديم خدمة أفضل! 🙏"""
+4️⃣ **التشغيل:**
+• Actions > Generate snake animation > Run workflow 🚀.
+
+⚡ **ريح نفسك واستخدم "النشر التلقائي" 👇**
+
+💝 **دعم المطور:**
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH"""
         else:
-            caption = f"""🎉 Your README is ready!
+            caption = f"""🎉 **Profile Ready!** `{filename}`
 
-📁 `{filename}` contains:
-• README.md - Your professional profile
-• .github/workflows/snake.yml - Snake animation workflow
+👇 **Manual Setup Guide:**
 
-📋 Next Steps:
-1. Extract the ZIP file
-2. Customize the README if needed
-3. Add it to your GitHub repository
-4. Update the contact links
-5. Enable snake animation from Actions
+1️⃣ **Create Repo (Critical):**
+• Name it **SAME as Username** ({user.get_data('github')}).
+• Set to **Public**.
 
-🐍 Activate Snake:
-Go to Actions > Enable Actions
+2️⃣ **Upload Files:**
+• Extract & upload all (keep `.github` folder).
+• `README.md` at root.
 
-💝 Support the Developer:
-If you liked the service, you can support development via:
-https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
+3️⃣ **Enable Snake 🐍:**
+• Settings > Actions > General
+• Select **Read and write permissions** & Save.
 
-Every support is appreciated and helps us provide better service! 🙏"""
+4️⃣ **Run:**
+• Actions > Generate snake animation > Run workflow 🚀.
+
+⚡ **Save time using "Auto-Deploy" below 👇**
+
+💝 **Support Developer:**
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH"""
+        
+        # Create keyboard with Auto-Deploy option
+        deploy_text = "🚀 النشر التلقائي على GitHub" if (user_language == Language.ARABIC or user_language == Language.EGYPTIAN) else "🚀 Auto-Deploy to GitHub"
+        rating_text = "⭐ تقييم البوت" if (user_language == Language.ARABIC or user_language == Language.EGYPTIAN) else "⭐ Rate Bot"
+        
+        keyboard = [
+            [InlineKeyboardButton(deploy_text, callback_data="deploy_github")],
+            [InlineKeyboardButton(rating_text, callback_data="show_rating")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
         await message_target.reply_document(
             document=InputFile(zip_buffer, filename=filename),
             caption=caption,
-            parse_mode='Markdown'
+            parse_mode='Markdown',
+            reply_markup=reply_markup
         )
         
         logger.info(f"Successfully sent ZIP file to user {user_id}")
         
-        # Show rating prompt after successful delivery
-        await show_rating_prompt(update, context)
+        # Show rating prompt after successful delivery DO NOT show it immediately now, let user choose
+        # await show_rating_prompt(update, context)
         
     except Exception as e:
         logger.error(f"Error generating ZIP file: {e}")

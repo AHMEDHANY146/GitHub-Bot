@@ -2,6 +2,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from utils.logger import Logger
 from utils.language import language_manager, Language
 from helpers.config import get_settings
+from bot.db_helper import save_rating
 
 logger = Logger.get_logger(__name__)
 settings = get_settings()
@@ -42,7 +43,8 @@ async def show_rating_prompt(update, context):
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await query.message.edit_text(rating_text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Use reply_text instead of edit_message_text because the previous message is a document (ZIP)
+    await query.message.reply_text(rating_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 async def handle_rating_callback(update, context):
@@ -71,6 +73,10 @@ async def handle_rating_callback(update, context):
     
     # Convert rating to stars
     stars = "⭐" * int(rating)
+    
+    # Save rating to database
+    session_id = context.user_data.get('session_id')
+    save_rating(user_id, int(rating), session_id=session_id)
     
     if rating == '5':
         message = language_manager.get_text("rating_thanks_5", user_language, stars=stars)
@@ -169,6 +175,10 @@ async def handle_feedback_text(update, context):
         
         # Log the feedback
         logger.info(f"User feedback received: {feedback_text}")
+        
+        # Save feedback to database (update the existing rating with feedback)
+        session_id = context.user_data.get('session_id')
+        save_rating(user_id, 5, feedback_text=feedback_text, session_id=session_id)  # Default 5 stars if feedback provided
         
         # Thank you message (bilingual)
         thank_you_text = language_manager.get_text("feedback_thanks", user_language)

@@ -58,6 +58,15 @@ def main():
     os.makedirs(os.path.join(outputs_dir, "zips"), exist_ok=True)
     os.makedirs(os.path.join(project_root, "logs"), exist_ok=True)
     
+    # Initialize database
+    try:
+        from services.DB import init_database
+        init_database()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.warning(f"Database initialization failed: {e}")
+        logger.warning("Bot will continue without database features")
+    
     # Start the bot
     logger.info("Bot is starting...")
     application.run_polling(

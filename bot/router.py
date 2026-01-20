@@ -15,9 +15,15 @@ from bot.handlers.language_handler import language_selection_callback
 from bot.handlers.rating_handler import (
     handle_rating_callback, 
     handle_feedback_callback, 
-    handle_feedback_text
+    handle_feedback_text,
+    show_rating_prompt
+)
+from bot.handlers.deploy_handler import (
+    request_github_token_callback,
+    handle_github_token
 )
 from utils.logger import Logger
+from bot.states import BotState
 
 
 logger = Logger.get_logger(__name__)
@@ -45,10 +51,29 @@ def setup_handlers(application: Application):
     # Rating and feedback handlers
     application.add_handler(CallbackQueryHandler(handle_rating_callback, pattern="^rating_"))
     application.add_handler(CallbackQueryHandler(handle_feedback_callback, pattern="^feedback_"))
+    application.add_handler(CallbackQueryHandler(show_rating_prompt, pattern="^show_rating$"))
+    
+    # Auto-Deploy handlers
+    application.add_handler(CallbackQueryHandler(request_github_token_callback, pattern="^deploy_github$"))
     
     # Message handlers
     application.add_handler(MessageHandler(filters.VOICE, voice_handler))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_feedback_text), group=1)  # Lower priority for feedback
+    
+    # Handle GitHub Token (Needs to check state)
+    class GithubTokenFilter(filters.UpdateFilter):
+        def filter(self, update):
+            from bot.states import conversation_manager, BotState
+            if not update.effective_user:
+                return False
+            user_id = update.effective_user.id
+            user = conversation_manager.get_user(user_id)
+            return user.state == BotState.WAITING_GITHUB_TOKEN
+
+    github_token_filter = GithubTokenFilter()
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND & github_token_filter, handle_github_token), group=0)
+    
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
     
     logger.info("All handlers have been registered")

@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes
 from bot.states import BotState, conversation_manager
 from utils.language import language_manager
 from utils.logger import Logger
+from bot.db_helper import save_user
 
 
 logger = Logger.get_logger(__name__)
@@ -11,6 +12,9 @@ logger = Logger.get_logger(__name__)
 async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the /start command and begin conversation"""
     user_id = update.effective_user.id
+    
+    # Save user to database
+    save_user(telegram_id=user_id)
     
     # Show language selection instead of direct start
     from bot.handlers.language_handler import show_language_selection
@@ -31,9 +35,21 @@ async def start_collection_callback(update: Update, context: ContextTypes.DEFAUL
     
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
-    conversation_manager.update_user_state(user_id, BotState.WAITING_NAME)
     
-    prompt_text = language_manager.get_text("start_collection", user_language)
+    # CHECK IF DATA WAS PRE-LOADED
+    user_data = conversation_manager.get_user(user_id)
+    if user_data.get_data('name'):
+        # Data exists, skip to experience collection
+        conversation_manager.update_user_state(user_id, BotState.WAITING_VOICE) # Or WAITING_TEXT
+        
+        name = user_data.get_data('name')
+        prompt_text = language_manager.get_text("experience_prompt", user_language, name=name)
+        
+        logger.info(f"User {user_id} skipped to experience collection (data pre-loaded)")
+    else:
+        # No data, start normal flow
+        conversation_manager.update_user_state(user_id, BotState.WAITING_NAME)
+        prompt_text = language_manager.get_text("start_collection", user_language)
+        logger.info(f"User {user_id} started info collection")
     
     await query.edit_message_text(prompt_text)
-    logger.info(f"User {user_id} started info collection")
