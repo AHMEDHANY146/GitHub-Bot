@@ -105,7 +105,10 @@ class ConversationManager:
     def get_user_language(self, user_id: int) -> Language:
         """Get user's preferred language, default to English"""
         language_code = self.get_user_data(user_id, 'language', 'en')
-        return Language(language_code) if language_code in ['en', 'ar'] else Language.ENGLISH
+        try:
+            return Language(language_code)
+        except ValueError:
+            return Language.ENGLISH
     
     def clear_user(self, user_id: int):
         """Clear user data and cleanup"""

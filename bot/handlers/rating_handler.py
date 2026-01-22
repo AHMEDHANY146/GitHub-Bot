@@ -65,10 +65,8 @@ async def handle_rating_callback(update, context):
         user_language = Language.ENGLISH
     
     if rating == 'skip':
-        if user_language == Language.ARABIC:
-            await query.message.edit_text("شكراً لاستخدامك البوت! 🎉")
-        else:
-            await query.message.edit_text("Thank you for using the bot! 🎉")
+        text = language_manager.get_text("rating_skip_message", user_language)
+        await query.message.edit_text(text)
         return
     
     # Convert rating to stars
@@ -78,12 +76,13 @@ async def handle_rating_callback(update, context):
     session_id = context.user_data.get('session_id')
     save_rating(user_id, int(rating), session_id=session_id)
     
+    feedback_text = language_manager.get_text("rating_feedback_button", user_language)
+    end_text = language_manager.get_text("rating_end_button", user_language)
+    support_text = language_manager.get_text("rating_support_button", user_language)
+    contact_text = language_manager.get_text("rating_contact_button", user_language)
+    
     if rating == '5':
         message = language_manager.get_text("rating_thanks_5", user_language, stars=stars)
-        
-        feedback_text = "💬 مشاركة فيدباك" if user_language == Language.ARABIC else "💬 Share Feedback"
-        end_text = "إنهاء" if user_language == Language.ARABIC else "End"
-        support_text = "💝 دعم المطور" if user_language == Language.ARABIC else "💝 Support Developer"
         
         keyboard = [
             [
@@ -97,10 +96,6 @@ async def handle_rating_callback(update, context):
     elif rating in ['4', '3']:
         message = language_manager.get_text("rating_thanks_4_3", user_language, stars=stars)
         
-        feedback_text = "💬 مشاركة اقتراحات" if user_language == Language.ARABIC else "💬 Share Suggestions"
-        end_text = "إنهاء" if user_language == Language.ARABIC else "End"
-        support_text = "💝 دعم المطور" if user_language == Language.ARABIC else "💝 Support Developer"
-        
         keyboard = [
             [
                 InlineKeyboardButton(feedback_text, callback_data="feedback_yes"),
@@ -112,9 +107,6 @@ async def handle_rating_callback(update, context):
         ]
     else:  # rating 1 or 2
         message = language_manager.get_text("rating_thanks_1_2", user_language, stars=stars)
-        
-        contact_text = "💬 تواصل مع الدعم" if user_language == Language.ARABIC else "💬 Contact Support"
-        end_text = "إنهاء" if user_language == Language.ARABIC else "End"
         
         keyboard = [
             [
@@ -143,13 +135,11 @@ async def handle_feedback_callback(update, context):
         user_language = Language.ENGLISH
     
     if query.data == "feedback_end":
-        if user_language == Language.ARABIC:
-            await query.message.edit_text("شكراً لاستخدامك البوت! 🎉\nنراك قريباً!")
-        else:
-            await query.message.edit_text("Thank you for using the bot! 🎉\nSee you soon!")
+        text = language_manager.get_text("rating_end_message", user_language)
+        await query.message.edit_text(text)
         return
     
-    # Start feedback collection (bilingual)
+    # Start feedback collection
     feedback_text = language_manager.get_text("feedback_prompt", user_language)
     
     # Store feedback state in user_data
@@ -180,10 +170,10 @@ async def handle_feedback_text(update, context):
         session_id = context.user_data.get('session_id')
         save_rating(user_id, 5, feedback_text=feedback_text, session_id=session_id)  # Default 5 stars if feedback provided
         
-        # Thank you message (bilingual)
+        # Thank you message
         thank_you_text = language_manager.get_text("feedback_thanks", user_language)
         
-        support_text = "💝 دعم المطور" if user_language == Language.ARABIC else "💝 Support Developer"
+        support_text = language_manager.get_text("rating_support_button", user_language)
         
         keyboard = [
             [

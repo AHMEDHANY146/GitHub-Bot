@@ -25,20 +25,14 @@ async def show_confirmation(update: Update, user_id: int):
     confirmation_text = format_confirmation_text(structured_data, user, user_language)
     
     # Create inline keyboard for confirmation with more editing options
-    # Get bilingual button texts (Masri uses Arabic text for buttons mostly)
-    is_ar_or_masri = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
-    
-    edit_contact_text = "✏️ تعديل الاسم/الروابط" if is_ar_or_masri else "✏️ Edit Name/Links"
-    add_tech_text = "🔧 إضافة تقنيات" if is_ar_or_masri else "🔧 Add Tech Stack"
-    
     keyboard = [
         [
             InlineKeyboardButton(language_manager.get_text("approve_button", user_language), callback_data="approve_readme"),
             InlineKeyboardButton(language_manager.get_text("edit_button", user_language), callback_data="edit_skills")
         ],
         [
-            InlineKeyboardButton(edit_contact_text, callback_data="edit_contact"),
-            InlineKeyboardButton(add_tech_text, callback_data="add_tech_stack")
+            InlineKeyboardButton(language_manager.get_text("edit_contact_button", user_language), callback_data="edit_contact"),
+            InlineKeyboardButton(language_manager.get_text("add_tech_button", user_language), callback_data="add_tech_stack")
         ],
         [
             InlineKeyboardButton(language_manager.get_text("regenerate_button", user_language), callback_data="regenerate_readme"),
@@ -56,7 +50,7 @@ async def show_confirmation(update: Update, user_id: int):
 
 
 def format_confirmation_text(structured_data: dict, user, user_language) -> str:
-    """Format the confirmation text with extracted information - comprehensive version"""
+    """Format the confirmation text with extracted information"""
     name = structured_data.get('name', 'Your Name')
     summary = structured_data.get('summary', '')
     skills = structured_data.get('skills', [])
@@ -73,129 +67,79 @@ def format_confirmation_text(structured_data: dict, user, user_language) -> str:
     portfolio = user.get_data('portfolio')
     email = user.get_data('email')
     
-    # Check if Arabic or Masri
-    is_arabic = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
+    # Check if Arabic or Masri for correct list formatting (RTL)
+    is_rtl = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
     
-    # Build comprehensive confirmation text based on language
-    if is_arabic:
-        confirmation = "📋 **مراجعة المعلومات المستخرجة**\n"
-        confirmation += "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        
-        # Personal Info Section
-        confirmation += "👤 **المعلومات الشخصية:**\n"
-        confirmation += f"• **الاسم:** {name}\n"
-        if github:
-            confirmation += f"• **GitHub:** {github}\n"
-        if linkedin:
-            confirmation += f"• **LinkedIn:** [الملف الشخصي]({linkedin})\n"
-        if portfolio:
-            confirmation += f"• **الموقع:** [زيارة]({portfolio})\n"
-        if email:
-            confirmation += f"• **البريد:** {email}\n"
-        
-        # Summary Section
-        if summary:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += "📝 **نبذة عني:**\n"
-            confirmation += f"{summary}\n"
-        
-        # Programming Languages
-        if languages:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"💻 **لغات البرمجة ({len(languages)}):**\n"
-            confirmation += format_skill_list_improved(languages, is_arabic)
-        
-        # Skills & Technologies  
-        if skills:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"🛠️ **المهارات والتقنيات ({len(skills)}):**\n"
-            confirmation += format_skill_list_improved(skills, is_arabic)
-        
-        # Tools
-        if tools:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"🔧 **الأدوات والمنصات ({len(tools)}):**\n"
-            confirmation += format_skill_list_improved(tools, is_arabic)
-        
-        # Dynamic sections
-        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-        confirmation += "🎯 **معلومات إضافية:**\n"
-        if currently_working_on:
-            confirmation += f"• 🚀 **أعمل حالياً على:** {currently_working_on}\n"
-        if currently_learning:
-            confirmation += f"• 📚 **أتعلم حالياً:** {currently_learning}\n"
-        if open_to:
-            confirmation += f"• 🤝 **مفتوح لـ:** {open_to}\n"
-        if fun_fact:
-            confirmation += f"• ⚡ **حقيقة ممتعة:** {fun_fact}\n"
-        
-        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-        # Using specific dialect prompt if available, otherwise generic Arabic
-        prompt_text = language_manager.get_text("confirmation_prompt", user_language)
-        confirmation += f"✅ {prompt_text}"
-        
-    else:
-        confirmation = "📋 **Review Extracted Information**\n"
-        confirmation += "━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        
-        # Personal Info Section
-        confirmation += "👤 **Personal Information:**\n"
-        confirmation += f"• **Name:** {name}\n"
-        if github:
-            confirmation += f"• **GitHub:** {github}\n"
-        if linkedin:
-            confirmation += f"• **LinkedIn:** [Profile]({linkedin})\n"
-        if portfolio:
-            confirmation += f"• **Portfolio:** [Visit]({portfolio})\n"
-        if email:
-            confirmation += f"• **Email:** {email}\n"
-        
-        # Summary Section
-        if summary:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += "📝 **About Me:**\n"
-            confirmation += f"{summary}\n"
-        
-        # Programming Languages
-        if languages:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"💻 **Programming Languages ({len(languages)}):**\n"
-            confirmation += format_skill_list_improved(languages, is_arabic)
-        
-        # Skills & Technologies  
-        if skills:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"🛠️ **Skills & Technologies ({len(skills)}):**\n"
-            confirmation += format_skill_list_improved(skills, is_arabic)
-        
-        # Tools
-        if tools:
-            confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-            confirmation += f"🔧 **Tools & Platforms ({len(tools)}):**\n"
-            confirmation += format_skill_list_improved(tools, is_arabic)
-        
-        # Dynamic sections
-        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-        confirmation += "🎯 **Additional Information:**\n"
-        if currently_working_on:
-            confirmation += f"• 🚀 **Currently Working On:** {currently_working_on}\n"
-        if currently_learning:
-            confirmation += f"• 📚 **Currently Learning:** {currently_learning}\n"
-        if open_to:
-            confirmation += f"• 🤝 **Open To:** {open_to}\n"
-        if fun_fact:
-            confirmation += f"• ⚡ **Fun Fact:** {fun_fact}\n"
-        
-        confirmation += "\n━━━━━━━━━━━━━━━━━━━━━━\n"
-        confirmation += "✅ Is this information correct? Choose an option:"
+    # Format lists
+    skills_text = format_skill_list_improved(skills, user_language)
+    tools_text = format_skill_list_improved(tools, user_language)
+    languages_text = format_skill_list_improved(languages, user_language)
     
-    return confirmation
+    # Build contact string
+    contact_parts = []
+    if github: contact_parts.append(f"• **GitHub:** {github}")
+    if linkedin: contact_parts.append(f"• **LinkedIn:** {linkedin}")
+    if portfolio: contact_parts.append(f"• **Portfolio:** {portfolio}")
+    if email: contact_parts.append(f"• **Email:** {email}")
+    contact_info = "\n".join(contact_parts)
+    
+    # Build skills section
+    section_parts = []
+    
+    # Combine all tech stack items
+    all_tech = []
+    if languages: all_tech.extend(languages)
+    if skills: all_tech.extend(skills)
+    if tools: all_tech.extend(tools)
+    
+    # Remove duplicates while preserving order
+    seen = set()
+    unique_tech = []
+    for item in all_tech:
+        item_lower = item.lower().strip()
+        if item_lower not in seen:
+            seen.add(item_lower)
+            unique_tech.append(item)
+    
+    if unique_tech:
+        title = language_manager.get_text("header_tech_stack", user_language)
+        tech_text = format_skill_list_improved(unique_tech, user_language)
+        section_parts.append(f"{title} ({len(unique_tech)}):\n{tech_text}")
+        
+    skills_section = "\n\n".join(section_parts)
+    
+    # Build additional info
+    additional_parts = []
+    if currently_working_on:
+        label = language_manager.get_text("label_working_on", user_language)
+        additional_parts.append(f"• {label} {currently_working_on}")
+    if currently_learning:
+        label = language_manager.get_text("label_learning", user_language)
+        additional_parts.append(f"• {label} {currently_learning}")
+    if open_to:
+        label = language_manager.get_text("label_open_to", user_language)
+        additional_parts.append(f"• {label} {open_to}")
+    if fun_fact:
+        label = language_manager.get_text("label_fun_fact", user_language)
+        additional_parts.append(f"• {label} {fun_fact}")
+        
+    additional_info = "\n".join(additional_parts) if additional_parts else language_manager.get_text("text_none", user_language)
+    
+    return language_manager.get_text(
+        "confirmation_text",
+        user_language,
+        name=name,
+        contact_info=contact_info,
+        summary=summary,
+        skills_section=skills_section,
+        additional_info=additional_info
+    )
 
 
-def format_skill_list_improved(skills: list, is_arabic: bool = False) -> str:
+def format_skill_list_improved(skills: list, user_language) -> str:
     """Format a list of skills for display - improved version"""
     if not skills:
-        return "لا يوجد" if is_arabic else "None"
+        return language_manager.get_text("text_none", user_language)
     
     # Format skills in a clean grid-like display
     formatted_skills = [skill.title() for skill in skills]
@@ -204,8 +148,8 @@ def format_skill_list_improved(skills: list, is_arabic: bool = False) -> str:
     if len(formatted_skills) <= 15:
         # Show in rows of 3-4 skills
         rows = []
-        for i in range(0, len(formatted_skills), 4):
-            row_skills = formatted_skills[i:i+4]
+        for i in range(0, len(formatted_skills), 3):
+            row_skills = formatted_skills[i:i+3]
             rows.append("  " + " • ".join(row_skills))
         return "\n".join(rows)
     else:
@@ -213,11 +157,11 @@ def format_skill_list_improved(skills: list, is_arabic: bool = False) -> str:
         shown = formatted_skills[:12]
         remaining = len(formatted_skills) - 12
         rows = []
-        for i in range(0, len(shown), 4):
-            row_skills = shown[i:i+4]
+        for i in range(0, len(shown), 3):
+            row_skills = shown[i:i+3]
             rows.append("  " + " • ".join(row_skills))
         
-        more_text = f"و {remaining} مهارة أخرى..." if is_arabic else f"... and {remaining} more"
+        more_text = language_manager.get_text("text_and_more", user_language, count=remaining)
         rows.append(f"  📌 {more_text}")
         return "\n".join(rows)
 
@@ -282,25 +226,9 @@ async def edit_contact_callback(update: Update, context: ContextTypes.DEFAULT_TY
     # Move to contact editing state
     conversation_manager.update_user_state(user_id, BotState.WAITING_CONTACT)
     
-    contact_edit_text = """✏️ **Edit Contact Information**
-
-Please send your updated information in this format:
-
-**Name:** Your Full Name
-**GitHub:** github-username  
-**LinkedIn:** https://linkedin.com/in/your-profile
-**Portfolio:** https://your-website.com
-**Email:** your.email@example.com
-
-You can send only the fields you want to update. For example:
-```
-Name: John Doe
-GitHub: johndoe
-```
-
-Send /cancel to go back."""
+    contact_edit_text = language_manager.get_text("contact_edit_prompt", user_language)
     
-    await query.edit_message_text(contact_edit_text)
+    await query.edit_message_text(contact_edit_text, parse_mode='Markdown')
     logger.info(f"User {user_id} chose to edit contact information")
 
 
@@ -316,25 +244,9 @@ async def add_tech_stack_callback(update: Update, context: ContextTypes.DEFAULT_
     # Move to tech stack adding state
     conversation_manager.update_user_state(user_id, BotState.WAITING_TECH_STACK)
     
-    tech_stack_text = """🔧 **Add Tech Stack Items**
-
-Please send additional technologies, tools, or skills you want to add:
-
-**Examples:**
-- Programming languages: python, javascript, typescript, go, rust
-- Frameworks: react, vue, angular, django, flask
-- Tools: docker, kubernetes, git, aws, azure
-- Databases: mysql, postgresql, mongodb, redis
-- Other: power bi, tableau, jupyter
-
-You can send them as a comma-separated list:
-```
-react, typescript, docker, aws, postgresql
-```
-
-Send /cancel to go back."""
+    tech_stack_text = language_manager.get_text("tech_stack_prompt", user_language)
     
-    await query.edit_message_text(tech_stack_text)
+    await query.edit_message_text(tech_stack_text, parse_mode='Markdown')
     logger.info(f"User {user_id} chose to add tech stack items")
 
 
@@ -480,59 +392,12 @@ jobs:
         user_language_code = conversation_manager.get_user_language(user_id)
         user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
         
-        # Bilingual caption with support link
-        if user_language == Language.ARABIC or user_language == Language.EGYPTIAN:
-            caption = f"""🎉 **ملفك جاهز!** `{filename}`
-
-👇 **خطوات التثبيت اليدوي:**
-
-1️⃣ **إنشاء المستودع (هام جدًا):**
-• سمِّه بنفس **اسم المستخدم** ({user.get_data('github')}).
-• اجعله **Public**.
-
-2️⃣ **رفع الملفات:**
-• فك الضغط وارفع الكل (خاصة مجلد `.github`).
-• `README.md` في الواجهة.
-
-3️⃣ **تفعيل السنيك (Snake 🐍):**
-• Settings > Actions > General
-• اختر **Read and write permissions** واحفظ.
-
-4️⃣ **التشغيل:**
-• Actions > Generate snake animation > Run workflow 🚀.
-
-⚡ **ريح نفسك واستخدم "النشر التلقائي" 👇**
-
-💝 **دعم المطور:**
-https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH"""
-        else:
-            caption = f"""🎉 **Profile Ready!** `{filename}`
-
-👇 **Manual Setup Guide:**
-
-1️⃣ **Create Repo (Critical):**
-• Name it **SAME as Username** ({user.get_data('github')}).
-• Set to **Public**.
-
-2️⃣ **Upload Files:**
-• Extract & upload all (keep `.github` folder).
-• `README.md` at root.
-
-3️⃣ **Enable Snake 🐍:**
-• Settings > Actions > General
-• Select **Read and write permissions** & Save.
-
-4️⃣ **Run:**
-• Actions > Generate snake animation > Run workflow 🚀.
-
-⚡ **Save time using "Auto-Deploy" below 👇**
-
-💝 **Support Developer:**
-https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH"""
+        # Localized caption
+        caption = language_manager.get_text("zip_caption", user_language, filename=filename, username=user.get_data('github'))
         
-        # Create keyboard with Auto-Deploy option
-        deploy_text = "🚀 النشر التلقائي على GitHub" if (user_language == Language.ARABIC or user_language == Language.EGYPTIAN) else "🚀 Auto-Deploy to GitHub"
-        rating_text = "⭐ تقييم البوت" if (user_language == Language.ARABIC or user_language == Language.EGYPTIAN) else "⭐ Rate Bot"
+        # Localized buttons
+        deploy_text = language_manager.get_text("auto_deploy_button", user_language)
+        rating_text = language_manager.get_text("rate_bot_button", user_language)
         
         keyboard = [
             [InlineKeyboardButton(deploy_text, callback_data="deploy_github")],
@@ -548,9 +413,6 @@ https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH"""
         )
         
         logger.info(f"Successfully sent ZIP file to user {user_id}")
-        
-        # Show rating prompt after successful delivery DO NOT show it immediately now, let user choose
-        # await show_rating_prompt(update, context)
         
     except Exception as e:
         logger.error(f"Error generating ZIP file: {e}")

@@ -293,19 +293,22 @@ async def handle_contact_edit(update: Update, text: str):
                         updated_fields.append(f"❌ Invalid {key.title()}: {value}")
         
         if updated_fields:
-            result_text = "✅ **Contact Information Updated:**\n\n" + "\n".join(updated_fields)
-            result_text += "\n\n🔄 Regenerating your README with updated information..."
+            result_text = language_manager.get_text(
+                "contact_updated_success", 
+                user_language, 
+                updated_fields="\n".join(updated_fields)
+            )
             
             await update.message.reply_text(result_text)
             
             # Re-process the data with updated information
             await start_processing(update, user_id)
         else:
-            await update.message.reply_text("❌ No valid fields found. Please use the format: Name: Your Name")
+            await update.message.reply_text(language_manager.get_text("contact_updated_error", user_language))
             
     except Exception as e:
         logger.error(f"Error processing contact edit: {e}")
-        await update.message.reply_text("❌ Error processing your input. Please check the format and try again.")
+        await update.message.reply_text(language_manager.get_text("contact_error", user_language))
     
     logger.info(f"User {user_id} edited contact information")
 
@@ -322,7 +325,7 @@ async def handle_tech_stack_add(update: Update, text: str):
         items = [item.strip() for item in re.split(r'[,，\n]+', text) if item.strip()]
         
         if not items:
-            await update.message.reply_text("❌ No valid items found. Please send technologies separated by commas.")
+            await update.message.reply_text(language_manager.get_text("tech_stack_error_empty", user_language))
             return
         
         # Get current structured data
@@ -362,15 +365,15 @@ async def handle_tech_stack_add(update: Update, text: str):
         user.add_data('structured_data', structured_data)
         
         # Show what was added
-        result_text = "🔧 **Tech Stack Updated:**\n\n"
+        details = ""
         if added_languages:
-            result_text += f"💻 **Languages:** {', '.join(added_languages)}\n"
+            details += f"💻 **Languages:** {', '.join(added_languages)}\n"
         if added_skills:
-            result_text += f"🛠️ **Skills:** {', '.join(added_skills)}\n"
+            details += f"🛠️ **Skills:** {', '.join(added_skills)}\n"
         if added_tools:
-            result_text += f"🔧 **Tools:** {', '.join(added_tools)}\n"
-        
-        result_text += "\n🔄 Regenerating your README with updated tech stack..."
+            details += f"🔧 **Tools:** {', '.join(added_tools)}\n"
+            
+        result_text = language_manager.get_text("tech_stack_updated", user_language, details=details)
         
         await update.message.reply_text(result_text)
         
@@ -379,6 +382,6 @@ async def handle_tech_stack_add(update: Update, text: str):
         
     except Exception as e:
         logger.error(f"Error processing tech stack addition: {e}")
-        await update.message.reply_text("❌ Error processing your input. Please send technologies separated by commas.")
+        await update.message.reply_text(language_manager.get_text("tech_stack_error", user_language))
     
     logger.info(f"User {user_id} added tech stack items")

@@ -113,6 +113,17 @@ This will take a few moments...""",
                 "skip_button": "⏭️ Skip",
                 "skipped_linkedin": "✅ Skipped LinkedIn\n\nWhat's your portfolio website URL? (optional)",
                 "skipped_portfolio": "✅ Skipped portfolio\n\nWhat's your email address? (optional)",
+
+                # Info update messages
+                "contact_updated_success": "✅ **Contact Information Updated:**\n\n{updated_fields}\n\n🔄 Regenerating your README with updated information...",
+                "contact_updated_error": "❌ No valid fields found. Please use the format: Name: Your Name",
+                "contact_error": "❌ Error processing your input. Please check the format and try again.",
+                "tech_stack_updated": "🔧 **Tech Stack Updated:**\n\n{details}\n🔄 Regenerating your README with updated tech stack...",
+                "tech_stack_error_empty": "❌ No valid items found. Please send technologies separated by commas.",
+                "tech_stack_error": "❌ Error processing your input. Please send technologies separated by commas.",
+
+                "edit_contact_button": "✏️ Edit Name/Links",
+                "add_tech_button": "🔧 Add Tech Stack",
                 
                 # Language selection
                 "language_prompt": "Please select your preferred language / من فضلك اختر لغتك المفضلة:",
@@ -129,21 +140,25 @@ This will take a few moments...""",
                 "cancel_button": "❌ Cancel",
                 
                 # Confirmation messages
-                "confirmation_text": """📋 Review Your Information
+                "confirmation_text": """📋 **Review Extracted Information**
+━━━━━━━━━━━━━━━━━━━━━━
 
-Name: {name}
+👤 **Personal Information:**
+• **Name:** {name}
+{contact_info}
 
-About Me:
+━━━━━━━━━━━━━━━━━━━━━━
+📝 **About Me:**
 {summary}
 
-Skills ({len(skills)}):
-{', '.join(skills[:10])}{'...' if len(skills) > 10 else ''}
+{skills_section}
 
-Tools ({len(tools)}):
-{', '.join(tools[:10])}{'...' if len(tools) > 10 else ''}
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 **Additional Information:**
+{additional_info}
 
-Languages ({len(languages)}):
-{', '.join(languages[:10])}{'...' if len(languages) > 10 else ''}""",
+━━━━━━━━━━━━━━━━━━━━━━
+✅ Is this information correct? Choose an option:""",
                 
                 "confirmation_prompt": "Is this information correct? Choose an option below:",
                 "edit_prompt": """✏️ Edit Your Information
@@ -154,6 +169,42 @@ Please send me a corrected version of your experience. You can:
 📝 Type a text description
 
 Focus on any skills, tools, or languages I might have missed.""",
+
+                "contact_edit_prompt": """✏️ **Edit Contact Information**
+
+Please send your updated information in this format:
+
+**Name:** Your Full Name
+**GitHub:** github-username  
+**LinkedIn:** https://linkedin.com/in/your-profile
+**Portfolio:** https://your-website.com
+**Email:** your.email@example.com
+
+You can send only the fields you want to update. For example:
+```
+Name: John Doe
+GitHub: johndoe
+```
+
+Send /cancel to go back.""",
+
+                "tech_stack_prompt": """🔧 **Add Tech Stack Items**
+
+Please send additional technologies, tools, or skills you want to add:
+
+**Examples:**
+- Programming languages: python, javascript, typescript, go, rust
+- Frameworks: react, vue, angular, django, flask
+- Tools: docker, kubernetes, git, aws, azure
+- Databases: mysql, postgresql, mongodb, redis
+- Other: power bi, tableau, jupyter
+
+You can send them as a comma-separated list:
+```
+react, typescript, docker, aws, postgresql
+```
+
+Send /cancel to go back.""",
                 
                 "regenerate_message": "🔄 Regenerating your README...",
                 "cancel_message": """❌ README Generation Cancelled
@@ -242,7 +293,26 @@ https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
 🔧 For any inquiries:
 @Ahmedhany146
 
-Thank you for your trust! 🙏"""
+Thank you for your trust! 🙏""",
+
+                "rating_skip_message": "Thank you for using the bot! 🎉",
+                "rating_feedback_button": "💬 Share Suggestion",
+                "rating_end_button": "End",
+                "rating_support_button": "💝 Support Developer",
+                "rating_contact_button": "💬 Contact Support",
+                "rating_end_message": "Thank you for using the bot! 🎉\nSee you soon!",
+
+                # Headers and Labels
+                "header_tech_stack": "🛠️ **Tech Stack**",
+                "header_programming_languages": "💻 **Programming Languages**",
+                "header_skills_tech": "🛠️ **Skills & Technologies**",
+                "header_tools_platforms": "🔧 **Tools & Platforms**",
+                "label_working_on": "🚀 **Currently Working On:**",
+                "label_learning": "📚 **Currently Learning:**",
+                "label_open_to": "🤝 **Open To:**",
+                "label_fun_fact": "⚡ **Fun Fact:**",
+                "text_none": "None",
+                "text_and_more": "... and {count} more",
             },
             
             Language.ARABIC: {
@@ -341,6 +411,17 @@ Python, JavaScript, React, Docker, Git, AWS, والعديد أكثر!
                 "skipped_linkedin": "✅ تم تخطي LinkedIn\n\nما هو رابط موقعك الإلكتروني؟ (اختياري)",
                 "skipped_portfolio": "✅ تم تخطي الموقع الإلكتروني\n\nما هو عنوان بريدك الإلكتروني؟ (اختياري)",
                 
+                # Info update messages
+                "contact_updated_success": "✅ **تم تحديث البيانات:**\n\n{updated_fields}\n\n🔄 جاري تحديث الـ README بالبيانات الجديدة...",
+                "contact_updated_error": "❌ لم يتم العثور على بيانات صحيحة. يرجى استخدام التنسيق: Name: Your Name",
+                "contact_error": "❌ حدث خطأ أثناء معالجة البيانات.",
+                "tech_stack_updated": "🔧 **تم تحديث التقنيات:**\n\n{details}\n🔄 جاري تحديث الـ README...",
+                "tech_stack_error_empty": "❌ لم يتم العثور على تقنيات. يرجى إرسال التقنيات مفصولة بفواصل.",
+                "tech_stack_error": "❌ خطأ في المعالجة. يرجى إرسال التقنيات مفصولة بفواصل.",
+
+                "edit_contact_button": "✏️ تعديل الاسم/الروابط",
+                "add_tech_button": "🔧 إضافة تقنيات",
+                
                 # Language selection
                 "language_prompt": "من فضلك اختر لغتك المفضلة / Please select your preferred language:",
                 "language_english": "🇺🇸 English",
@@ -356,21 +437,26 @@ Python, JavaScript, React, Docker, Git, AWS, والعديد أكثر!
                 "cancel_button": "❌ إلغاء",
                 
                 # Confirmation messages
-                "confirmation_text": """📋 مراجعة معلوماتك
+                # Confirmation messages
+                "confirmation_text": """📋 **مراجعة المعلومات المستخرجة**
+━━━━━━━━━━━━━━━━━━━━━━
 
-الاسم: {name}
+👤 **المعلومات الشخصية:**
+• **الاسم:** {name}
+{contact_info}
 
-عني:
+━━━━━━━━━━━━━━━━━━━━━━
+📝 **نبذة عني:**
 {summary}
 
-المهارات ({len(skills)}):
-{', '.join(skills[:10])}{'...' if len(skills) > 10 else ''}
+{skills_section}
 
-الأدوات ({len(tools)}):
-{', '.join(tools[:10])}{'...' if len(tools) > 10 else ''}
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 **معلومات إضافية:**
+{additional_info}
 
-اللغات ({len(languages)}):
-{', '.join(languages[:10])}{'...' if len(languages) > 10 else ''}""",
+━━━━━━━━━━━━━━━━━━━━━━
+✅ هل هذه المعلومات صحيحة؟ اختر خياراً أدناه:""",
                 
                 "confirmation_prompt": "هل هذه المعلومات صحيحة؟ اختر خياراً أدناه:",
                 "edit_prompt": """✏️ تعديل معلوماتك
@@ -381,6 +467,41 @@ Python, JavaScript, React, Docker, Git, AWS, والعديد أكثر!
 📝 كتابة وصف نصي
 
 ركز على أي مهارات أو أدوات أو لغات قد تكون فاتني.""",
+
+                "contact_edit_prompt": """✏️ **تعديل بيانات التواصل**
+
+يرجى إرسال بياناتك بالتنسيق التالي:
+
+**Name:** الاسم بالكامل
+**GitHub:** يوزر GitHub
+**LinkedIn:** رابط لينكد إن
+**Portfolio:** رابط موقعك
+**Email:** ايميلك
+
+يمكنك إرسال الحقول التي تريد تعديلها فقط:
+```
+Name: Ahmed Ali
+GitHub: ahmedali
+```
+
+أرسل /cancel للرجوع.""",
+
+                "tech_stack_prompt": """🔧 **إضافة تقنيات وأدوات**
+
+يرجى إرسال التقنيات أو الأدوات التي تريد إضافتها:
+
+**أمثلة:**
+- لغات: python, javascript, typescript
+- إطارات عمل: react, django, laravel
+- أدوات: docker, git, aws
+- قواعد بيانات: mysql, mongodb
+
+يمكنك إرسالها مفصولة بفواصل:
+```
+react, typescript, docker, aws
+```
+
+أرسل /cancel للرجوع.""",
                 
                 "regenerate_message": "🔄 إعادة توليد README الخاص بك...",
                 "cancel_message": """❌ تم إلغاء توليد README
@@ -388,6 +509,70 @@ Python, JavaScript, React, Docker, Git, AWS, والعديد أكثر!
 تم مسح جلستك. 
 
 إذا كنت ترغب في المحاولة مرة أخرى، فقط أرسل /start لبدء محادثة جديدة!""",
+
+                # ZIP Caption and Deploy
+                "zip_caption": """🎉 **ملفك جاهز!** `{filename}`
+
+👇 **خطوات التثبيت اليدوي:**
+
+1️⃣ **إنشاء المستودع (هام جدًا):**
+• سمِّه بنفس **اسم المستخدم** ({username}).
+• اجعله **Public**.
+
+2️⃣ **رفع الملفات:**
+• فك الضغط وارفع الكل (خاصة مجلد `.github`).
+• `README.md` في الواجهة.
+
+3️⃣ **تفعيل السنيك (Snake 🐍):**
+• Settings > Actions > General
+• اختر **Read and write permissions** واحفظ.
+
+4️⃣ **التشغيل:**
+• Actions > Generate snake animation > Run workflow 🚀.
+
+⚡ **ريح نفسك واستخدم "النشر التلقائي" 👇**
+
+💝 **دعم المطور:**
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH""",
+
+                "auto_deploy_button": "🚀 النشر التلقائي على GitHub",
+                "rate_bot_button": "⭐ تقييم البوت",
+
+                # Deployment Flow
+                "deploy_intro_text": """🚀 **النشر التلقائي على GitHub**
+
+للقيام بذلك، نحتاج إلى **Personal Access Token** خاص بك مع الصلاحيات التالية:
+1. `repo` (للتحكم بالمستودعات الخاصة/العامة)
+2. `workflow` (لتفعيل الـ Actions)
+
+**كيف تحصل عليه؟**
+1. اذهب إلى GitHub Settings > Developer settings
+2. اختر Personal access tokens > Tokens (classic)
+3. انشأ Token جديد واختر الصلاحيات المطلوبة (`repo`, `workflow`)
+4. انسخ الـ Token وأرسله هنا 👇
+
+⚠️ **ملاحظة:** نحن لا نحفظ الـ Token، نستخدمه مرة واحدة فقط للنشر ثم ننساه تماماً للأمان.
+
+أرسل الـ Token الآن أو أرسل /cancel للإلغاء.""",
+
+                "validating_token": "⏳ جاري التحقق من الـ Token...",
+                "invalid_token": "❌ **Token غير صالح!**\nتأكد من نسخه بشكل صحيح وحاول مرة أخرى.",
+                "token_warning": "⚠️ **تنبيه:** الـ Token ينتمي للمستخدم `{username}` بينما أدخلت سابقاً `{stored_username}`.\nسأقوم بالنشر على حساب `{username}`.",
+                "token_verified": "✅ تم التحقق! مرحباً `{username}`\n🚀 جاري إنشاء المستودع ورفع الملفات...",
+                "uploading_readme": "📤 جاري رفع README.md...",
+                "setting_up_snake": "🐍 جاري إعداد Snake Animation...",
+                "deploy_success": """🎉 **تم النشر بنجاح!**
+
+🔗 رابط المستودع: {repo_url}
+
+✅ تم رفع README.md
+✅ تم إعداد Snake Animation
+✅ تم تفعيل وتشغيل الـ Actions
+
+قد يأخذ الـ Snake Animation بضع دقائق ليظهر (بعد انتهاء الـ GitHub Action).
+
+شكراً لاستخدامك البوت!""",
+                "deploy_error": "❌ **حدث خطأ أثناء النشر:**\n{error}\n\nحاول مرة أخرى أو قم بالنشر يدوياً باستخدام ملف ZIP.",
                 
                 # Voice handler messages
                 "please_complete_previous_steps": "يرجى إكمال الخطوات السابقة أولاً. استخدم /start للبدء.",
@@ -469,7 +654,26 @@ https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
 🔧 لأي استفسار:
 @Ahmedhany146
 
-شكراً لثقتك بنا! 🙏"""
+شكراً لثقتك بنا! 🙏""",
+
+                "rating_skip_message": "شكراً لاستخدامك البوت! 🎉",
+                "rating_feedback_button": "💬 مشاركة اقتراح",
+                "rating_end_button": "إنهاء",
+                "rating_support_button": "💝 دعم المطور",
+                "rating_contact_button": "💬 تواصل مع الدعم",
+                "rating_end_message": "شكراً لاستخدامك البوت! 🎉\nنراك قريباً!",
+
+                # Headers and Labels
+                "header_tech_stack": "🛠️ **التقنيات المستخدمة**",
+                "header_programming_languages": "💻 **لغات البرمجة**",
+                "header_skills_tech": "🛠️ **المهارات والتقنيات**",
+                "header_tools_platforms": "🔧 **الأدوات والمنصات**",
+                "label_working_on": "🚀 **أعمل حالياً على:**",
+                "label_learning": "📚 **أتعلم حالياً:**",
+                "label_open_to": "🤝 **مفتوح لـ:**",
+                "label_fun_fact": "⚡ **حقيقة ممتعة:**",
+                "text_none": "لا يوجد",
+                "text_and_more": "و {count} مهارة أخرى...",
             },
 
             Language.EGYPTIAN: {
@@ -568,6 +772,17 @@ Python, JavaScript, React, Docker, Git, AWS, وكله!
                 "skipped_linkedin": "✅ ماشي، تخطي LinkedIn\n\nعندك موقع شخصي Portfolio؟ (اختياري)",
                 "skipped_portfolio": "✅ تخطي الموقع\n\nطيب إيميلك إيه؟ (اختياري)",
                 
+                # Info update messages
+                "contact_updated_success": "✅ **تم تحديث البيانات:**\n\n{updated_fields}\n\n🔄 بظبط الـ README بالبيانات الجديدة...",
+                "contact_updated_error": "❌ ملقيتش بيانات صح. ياريت تستخدم الشكل ده: Name: Your Name",
+                "contact_error": "❌ حصلت مشكلة وأنا بظبط البيانات.",
+                "tech_stack_updated": "🔧 **تم تحديث التقنيات:**\n\n{details}\n🔄 بظبط الـ README...",
+                "tech_stack_error_empty": "❌ ملقيتش تقنيات. ياريت تبعتلي التقنيات وبينهم فواصل.",
+                "tech_stack_error": "❌ حصلت مشكلة. ياريت تبعتلي التقنيات وبينهم فواصل.",
+
+                "edit_contact_button": "✏️ تعديل الاسم/الروابط",
+                "add_tech_button": "🔧 إضافة تقنيات",
+                
                 # Language selection
                 "language_prompt": "اختار اللغة اللي تريحك / Choose your language:",
                 "language_english": "🇺🇸 English",
@@ -584,21 +799,25 @@ Python, JavaScript, React, Docker, Git, AWS, وكله!
                 "cancel_button": "❌ إلغاء",
                 
                 # Confirmation messages
-                "confirmation_text": """📋 راجع بياناتك يا بطل
+                "confirmation_text": """📋 **راجع بياناتك يا بطل**
+━━━━━━━━━━━━━━━━━━━━━━
 
-الاسم: {name}
+👤 **المعلومات الشخصية:**
+• **الاسم:** {name}
+{contact_info}
 
-نبذة عني:
+━━━━━━━━━━━━━━━━━━━━━━
+📝 **نبذة عني:**
 {summary}
 
-المهارات ({len(skills)}):
-{', '.join(skills[:10])}{'...' if len(skills) > 10 else ''}
+{skills_section}
 
-الأدوات ({len(tools)}):
-{', '.join(tools[:10])}{'...' if len(tools) > 10 else ''}
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 **معلومات إضافية:**
+{additional_info}
 
-اللغات ({len(languages)}):
-{', '.join(languages[:10])}{'...' if len(languages) > 10 else ''}""",
+━━━━━━━━━━━━━━━━━━━━━━
+✅ الكلام ده مظبوط؟ اختار من تحت:""",
                 
                 "confirmation_prompt": "الكلام ده مظبوط؟ اختار من تحت:",
                 "edit_prompt": """✏️ عدل براحتك
@@ -609,6 +828,41 @@ Python, JavaScript, React, Docker, Git, AWS, وكله!
 📝 أو تكتبلي التعديل
 
 قولي لو في مهارات أو أدوات نسيتها.""",
+
+                "contact_edit_prompt": """✏️ **تعديل بيانات التواصل**
+
+ابعتلي بياناتك بالشكل ده:
+
+**Name:** الاسم بالكامل
+**GitHub:** يوزر GitHub
+**LinkedIn:** رابط لينكد إن
+**Portfolio:** رابط موقعك
+**Email:** ايميلك
+
+ممكن تبعت الحاجات اللي عايز تعدلها بس:
+```
+Name: Ahmed Ali
+GitHub: ahmedali
+```
+
+ابعت /cancel عشان ترجع.""",
+
+                "tech_stack_prompt": """🔧 **إضافة تقنيات وأدوات**
+
+ابعتلي التقنيات أو الأدوات اللي عايز تزودها:
+
+**أمثلة:**
+- لغات: python, javascript, typescript
+- إطارات عمل: react, django, laravel
+- أدوات: docker, git, aws
+- قواعد بيانات: mysql, mongodb
+
+ممكن تبعتهم كلهم مرة واحدة وبينهم فواصل:
+```
+react, typescript, docker, aws
+```
+
+ابعت /cancel عشان ترجع.""",
                 
                 "regenerate_message": "🔄 بظبطلك الـ README تاني...",
                 "cancel_message": """❌ تم الإلغاء
@@ -616,6 +870,70 @@ Python, JavaScript, React, Docker, Git, AWS, وكله!
 خلاص مسحت الجلسة دي.
 
 لو عايز تبدأ من جديد في أي وقت، ابعت /start.""",
+
+                # ZIP Caption and Deploy
+                "zip_caption": """🎉 **ملفك جاهز!** `{filename}`
+
+👇 **خطوات التثبيت اليدوي:**
+
+1️⃣ **إنشاء المستودع (مهم جداً):**
+• سمِّه بنفس **اسم المستخدم** ({username}).
+• خليه **Public**.
+
+2️⃣ **رفع الملفات:**
+• فك الضغط وارفع كل حاجة (خصوصاً فولدر `.github`).
+• `README.md` برة خالص.
+
+3️⃣ **شغل السنيك (Snake 🐍):**
+• Settings > Actions > General
+• اختار **Read and write permissions** واحفظ.
+
+4️⃣ **التشغيل:**
+• Actions > Generate snake animation > Run workflow 🚀.
+
+⚡ **ريح نفسك واستخدم "النشر التلقائي" 👇**
+
+💝 **دعم المطور:**
+https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH""",
+
+                "auto_deploy_button": "🚀 النشر التلقائي على GitHub",
+                "rate_bot_button": "⭐ تقييم البوت",
+
+                # Deployment Flow
+                "deploy_intro_text": """🚀 **النشر التلقائي على GitHub**
+
+عشان نعمل ده، محتاجين **Personal Access Token** بتاعك ويكون واخد الصلاحيات دي:
+1. `repo` (عشان نتحكم في المستودعات)
+2. `workflow` (عشان نشغل الـ Actions)
+
+**تجيبه إزاي؟**
+1. روح لـ GitHub Settings > Developer settings
+2. اختار Personal access tokens > Tokens (classic)
+3. اعمل Token جديد واختار الصلاحيات دي (`repo`, `workflow`)
+4. خد الـ Token كوبي وابعتوا هنا 👇
+
+⚠️ **خلي بالك:** إحنا مش بنحفظ الـ Token خالص، بنستخدمه مرة واحدة للنشر وبننساه علطول عشان أمانك.
+
+ابعت الـ Token دلوقتي أو ابعت /cancel للإلغاء.""",
+
+                "validating_token": "⏳ بتأكد من الـ Token...",
+                "invalid_token": "❌ **Token مش شغال!**\nتأكد إنك اخدته كوبي صح وجرب تاني.",
+                "token_warning": "⚠️ **تنبيه:** الـ Token ده بتاع اليوزر `{username}` وأنت كنت كاتب `{stored_username}`.\nهرفع الشغل على حساب `{username}`.",
+                "token_verified": "✅ كله تمام! منور يا `{username}`\n🚀 جاري إنشاء المستودع ورفع الملفات...",
+                "uploading_readme": "📤 برفع الـ README.md...",
+                "setting_up_snake": "🐍 بظبط الـ Snake Animation...",
+                "deploy_success": """🎉 **تم النشر بنجاح!**
+
+🔗 لينك المستودع: {repo_url}
+
+✅ رفعت الـ README.md
+✅ ظبطت الـ Snake Animation
+✅ وشغلت الـ Actions
+
+ممكن الـ Snake Animation ياخد دقيقتين عشان يظهر (لما الـ GitHub Action يخلص).
+
+شكراً إنك استخدمت البوت!""",
+                "deploy_error": "❌ **حصلت مشكلة وقت النشر:**\n{error}\n\nجرب تاني أو ارفع الملفات يدوي من ملف الـ ZIP.",
                 
                 # Voice handler messages
                 "please_complete_previous_steps": "كمل الخطوات اللي فاتت الأول. ابعت /start عشان تبدأ.",
@@ -696,7 +1014,26 @@ https://ipn.eg/S/ahmedhanycs/instapay/5Ni1NH
 🔧 لو عندك استفسار:
 @Ahmedhany146
 
-شكراً ليك يا بطل! 🙏"""
+شكراً ليك يا بطل! 🙏""",
+
+                "rating_skip_message": "شكراً إنك استخدمت البوت! 🎉",
+                "rating_feedback_button": "💬 ابعت اقتراح",
+                "rating_end_button": "إنها",
+                "rating_support_button": "💝 ادعم المطور",
+                "rating_contact_button": "💬 كلم الدعم",
+                "rating_end_message": "شكراً ليك يا بطل! 🎉\nنشوفك قريب!",
+
+                # Headers and Labels
+                "header_tech_stack": "🛠️ **عدة الشغل (Tech Stack)**",
+                "header_programming_languages": "💻 **لغات البرمجة**",
+                "header_skills_tech": "🛠️ **المهارات والتقنيات**",
+                "header_tools_platforms": "🔧 **الأدوات والمنصات**",
+                "label_working_on": "🚀 **شغال حالياً على:**",
+                "label_learning": "📚 **بتعلم حالياً:**",
+                "label_open_to": "🤝 **مفتوح لـ:**",
+                "label_fun_fact": "⚡ **حاجة عني:**",
+                "text_none": "مفيش",
+                "text_and_more": "و {count} كمان...",
             }
         }
     

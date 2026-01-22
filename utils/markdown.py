@@ -190,102 +190,23 @@ class MarkdownGenerator:
 </div>"""
     
     def _generate_skills_section(self, skills: List[str]) -> str:
-        """Generate Skills section with proper categorization and icons - shows ALL skills with icons"""
+        """Generate unified Tech Stack section with all icons"""
         if not skills:
             return ""
         
-        # Extended keyword lists for better categorization
-        programming_keywords = [
-            'python', 'javascript', 'java', 'c++', 'c#', 'typescript', 'go', 'golang',
-            'rust', 'php', 'swift', 'kotlin', 'ruby', 'scala', 'r', 'matlab', 'html', 
-            'css', 'sass', 'less', 'perl', 'lua', 'dart', 'objective-c', 'shell', 'bash',
-            'powershell', 'haskell', 'elixir', 'clojure', 'f#', 'groovy', 'julia'
-        ]
+        # Generate skill entries for ALL skills
+        skill_entries = self._generate_skill_entries(skills)
         
-        frameworks_keywords = [
-            # AI/ML
-            'tensorflow', 'pytorch', 'keras', 'scikit', 'sklearn', 'pandas', 'numpy', 
-            'matplotlib', 'seaborn', 'opencv', 'nltk', 'spacy', 'huggingface', 'langchain',
-            # Web frameworks
-            'react', 'vue', 'angular', 'django', 'flask', 'fastapi', 'spring', 'laravel', 
-            'express', 'next', 'nuxt', 'svelte', 'gatsby', 'tailwind', 'bootstrap', 'node',
-            'nestjs', 'rails', 'asp.net', 'blazor', 'jquery', 'backbone', 'ember',
-            # Cloud and DevOps
-            'aws', 'azure', 'gcp', 'google cloud', 'docker', 'kubernetes', 'k8s', 'jenkins',
-            'git', 'github', 'gitlab', 'bitbucket', 'terraform', 'ansible', 'puppet', 'chef',
-            'circleci', 'travis', 'nginx', 'apache', 'heroku', 'vercel', 'netlify',
-            # Databases
-            'power bi', 'tableau', 'excel', 'sql', 'mongodb', 'postgresql', 'postgres',
-            'mysql', 'redis', 'elasticsearch', 'cassandra', 'dynamodb', 'firebase', 'supabase',
-            'sqlite', 'oracle', 'mariadb', 'neo4j', 'graphql',
-            # AI/ML concepts
-            'rag', 'chatbot', 'machine learning', 'deep learning', 'nlp', 'computer vision',
-            'data science', 'ai', 'artificial intelligence', 'llm', 'generative ai',
-            # Mobile
-            'android', 'ios', 'flutter', 'react native', 'xamarin', 'ionic',
-            # Other tools
-            'figma', 'photoshop', 'illustrator', 'sketch', 'xd', 'blender', 'unity', 'unreal',
-            'postman', 'insomnia', 'swagger', 'linux', 'ubuntu', 'debian', 'centos', 'vim',
-            'vscode', 'visual studio', 'intellij', 'pycharm', 'webstorm', 'atom', 'sublime'
-        ]
-        
-        # Categorize skills into 3 main sections
-        programming_skills = []
-        frameworks_tools = []
-        other_skills = []
-        
-        for skill in skills:
-            skill_lower = skill.lower().strip()
+        if not skill_entries:
+            return ""
             
-            # Check if it's a programming language
-            if any(keyword in skill_lower for keyword in programming_keywords):
-                programming_skills.append(skill)
-            # Check if it's a framework/tool
-            elif any(keyword in skill_lower for keyword in frameworks_keywords):
-                frameworks_tools.append(skill)
-            # Check if devicon has this skill - if yes, add to frameworks
-            elif self.devicon_resolver.validate_skill(skill):
-                frameworks_tools.append(skill)
-            # Other skills
-            else:
-                other_skills.append(skill)
+        skills_text = '\n'.join(skill_entries)
         
-        sections = []
+        return f"""### 🛠️ Tech Stack
         
-        # Programming Languages section
-        if programming_skills:
-            skill_entries = self._generate_skill_entries(programming_skills)
-            if skill_entries:
-                skills_text = '\n'.join(skill_entries)
-                sections.append(f"""### 💻 Programming Languages
-
 <div align="left">
 {skills_text}
-</div>""")
-        
-        # Frameworks & Tools section
-        if frameworks_tools:
-            skill_entries = self._generate_skill_entries(frameworks_tools)
-            if skill_entries:
-                skills_text = '\n'.join(skill_entries)
-                sections.append(f"""### 🤖 Frameworks & Tools
-
-<div align="left">
-{skills_text}
-</div>""")
-        
-        # Other Skills section - only show if there are valid skills with icons
-        if other_skills:
-            skill_entries = self._generate_skill_entries(other_skills)
-            if skill_entries:
-                skills_text = '\n'.join(skill_entries)
-                sections.append(f"""### 🎯 Other Technologies
-
-<div align="left">
-{skills_text}
-</div>""")
-        
-        return '\n\n'.join(sections) if sections else ""
+</div>"""
     
     def _generate_skill_entries(self, skills: List[str]) -> List[str]:
         """Generate HTML entries for skills with icons - only includes skills with valid icons"""
@@ -358,28 +279,7 @@ class MarkdownGenerator:
 {tools_text}
 </div>"""
     
-    def _generate_github_stats_section(self, structured_data: Dict[str, any]) -> str:
-        """Generate GitHub Stats section"""
-        github_username = structured_data.get('github', '')
-        
-        # Only generate GitHub stats section if username is provided
-        if not github_username:
-            return ""
-        
-        return f"""---
 
-## 📊 GitHub Activity
-
-<div align="center">
-  
-  <img src="https://github-readme-stats.vercel.app/api?username={github_username}&hide_title=false&hide_rank=false&show_icons=true&include_all_commits=true&count_private=true&disable_animations=false&theme=dark&locale=en&hide_border=true&bg_color=0D1117" height="150" alt="stats graph"  />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username={github_username}&locale=en&hide_title=false&layout=compact&card_width=320&langs_count=5&theme=dark&hide_border=true&bg_color=0D1117" height="150" alt="languages graph"  />
-  
-</div>
-
-<div align="center">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user={github_username}&theme=dark&hide_border=true&background=0D1117" alt="streak stats" />
-</div>"""
     
     def _generate_snake_animation(self, structured_data: Dict[str, any]) -> str:
         """Generate snake animation section"""
@@ -396,10 +296,6 @@ class MarkdownGenerator:
 
 <div align="center">
   <img src="https://github.com/{github_username}/{github_username}/blob/output/snake-dark.svg" alt="Snake animation" />
-</div>
-
-<div align="center">
-  <img src="https://github-readme-activity-graph.vercel.app/graph?username={github_username}&theme=dark&hide_border=true&bg_color=0D1117" alt="Activity graph" />
 </div>"""
     
     def _generate_profile_header(self, structured_data: Dict[str, any], github_username: str) -> str:

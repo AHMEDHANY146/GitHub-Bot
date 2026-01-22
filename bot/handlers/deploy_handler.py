@@ -10,7 +10,6 @@ from bot.states import BotState, conversation_manager
 from utils.language import language_manager, Language
 from utils.logger import Logger
 from services.github_api import GitHubAPI
-from bot.db_helper import complete_readme_session
 
 logger = Logger.get_logger(__name__)
 
@@ -24,45 +23,11 @@ async def request_github_token_callback(update: Update, context: ContextTypes.DE
     user_language_code = conversation_manager.get_user_language(user_id)
     user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
-    is_arabic = user_language == Language.ARABIC
-    
-    # Update state
     # Update state
     conversation_manager.update_user_state(user_id, BotState.WAITING_GITHUB_TOKEN)
     
     # Message explaining why we need the token and how to get it
-    if is_arabic or user_language == Language.EGYPTIAN:
-        text = """🚀 **النشر التلقائي على GitHub**
-
-للقيام بذلك، نحتاج إلى **Personal Access Token** خاص بك مع الصلاحيات التالية:
-1. `repo` (للتحكم بالمستودعات الخاصة/العامة)
-2. `workflow` (لتفعيل الـ Actions)
-
-**كيف تحصل عليه؟**
-1. اذهب إلى GitHub Settings > Developer settings
-2. اختر Personal access tokens > Tokens (classic)
-3. انشأ Token جديد واختر الصلاحيات المطلوبة
-4. انسخ الـ Token وأرسله هنا 👇
-
-⚠️ **ملاحظة:** نحن لا نحفظ الـ Token، نستخدمه مرة واحدة فقط للنشر ثم ننساه تماماً للأمان.
-
-أرسل الـ Token الآن أو أرسل /cancel للإلغاء."""
-    else:
-        text = """🚀 **Auto-Deploy to GitHub**
-
-To do this, we need your **Personal Access Token** with these scopes:
-1. `repo` (Full control of private repositories)
-2. `workflow` (Update GitHub Action workflows)
-
-**How to get it?**
-1. Go to GitHub Settings > Developer settings
-2. Select Personal access tokens > Tokens (classic)
-3. Generate new token and select required scopes
-4. Copy the token and send it here 👇
-
-⚠️ **Note:** We DO NOT store your token. We use it once for deployment and then forget it immediately for security.
-
-Send your Token now or /cancel to cancel."""
+    text = language_manager.get_text("deploy_intro_text", user_language)
     
     # Use reply_text instead of edit_message_text because the previous message is a document (ZIP)
     await query.message.reply_text(text, parse_mode='Markdown')
@@ -81,11 +46,10 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
         
     user_language_code = conversation_manager.get_user_language(user_id)
     user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
-    is_arabic = user_language == Language.ARABIC or user_language == Language.EGYPTIAN
     
     # Status message
     status_msg = await update.message.reply_text(
-        "⏳ جاري التحقق من الـ Token..." if is_arabic else "⏳ Validating Token..."
+        language_manager.get_text("validating_token", user_language)
     )
     
     # Initialize GitHub API
@@ -96,25 +60,25 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     if not username:
         await status_msg.edit_text(
-            "❌ **Token غير صالح!**\nتأكد من نسخه بشكل صحيح وحاول مرة أخرى." if is_arabic
-            else "❌ **Invalid Token!**\nPlease make sure you copied it correctly and try again."
+            language_manager.get_text("invalid_token", user_language)
         )
         return
 
     # Check against provided username (optional security check)
     stored_username = conversation_manager.get_user_data(user_id, 'github')
     if stored_username and stored_username.lower() != username.lower():
-        await status_msg.edit_text(
-            f"⚠️ **تنبيه:** الـ Token ينتمي للمستخدم `{username}` بينما أدخلت سابقاً `{stored_username}`.\nسأقوم بالنشر على حساب `{username}`." if is_arabic
-            else f"⚠️ **Warning:** Token belongs to user `{username}` but you previously entered `{stored_username}`.\nI will deploy to `{username}` account."
+        warning_text = language_manager.get_text(
+            "token_warning", 
+            user_language, 
+            username=username, 
+            stored_username=stored_username
         )
+        await status_msg.edit_text(warning_text)
         await asyncio.sleep(2)
     
     # Start deployment process
-    await status_msg.edit_text(
-        f"✅ تم التحقق! مرحباً `{username}`\n🚀 جاري إنشاء المستودع ورفع الملفات..." if is_arabic
-        else f"✅ Verified! Hello `{username}`\n🚀 Creating repository and uploading files..."
-    )
+    verified_text = language_manager.get_text("token_verified", user_language, username=username)
+    await status_msg.edit_text(verified_text)
     
     try:
         # 1. Get user data
@@ -134,7 +98,7 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
         
         # 4. Upload README.md
         await status_msg.edit_text(
-            "📤 جاري رفع README.md..." if is_arabic else "📤 Uploading README.md..."
+            language_manager.get_text("uploading_readme", user_language)
         )
         
         success = await github.update_file(
@@ -148,7 +112,7 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
             
         # 5. Upload Snake Workflow
         await status_msg.edit_text(
-            "🐍 جاري إعداد Snake Animation..." if is_arabic else "🐍 Setting up Snake Animation..."
+            language_manager.get_text("setting_up_snake", user_language)
         )
         
         snake_workflow = """name: Generate snake animation
@@ -204,27 +168,7 @@ jobs:
         # 7. Success!
         repo_url = f"https://github.com/{username}/{repo_name}"
         
-        success_text = f"""🎉 **تم النشر بنجاح!**
-
-🔗 رابط المستودع: {repo_url}
-
-✅ تم رفع README.md
-✅ تم إعداد Snake Animation
-✅ تم تفعيل وتشغيل الـ Actions
-
-قد يأخذ الـ Snake Animation بضع دقائق ليظهر (بعد انتهاء الـ GitHub Action).
-
-شكراً لاستخدامك البوت!""" if is_arabic else f"""🎉 **Deployment Successful!**
-
-🔗 Repo Link: {repo_url}
-
-✅ README.md uploaded
-✅ Snake Animation configured
-✅ Actions enabled and triggered
-
-The Snake Animation might take a few minutes to appear (after GitHub Action finishes).
-
-Thank you for using the bot!"""
+        success_text = language_manager.get_text("deploy_success", user_language, repo_url=repo_url)
 
         await status_msg.edit_text(success_text, parse_mode='Markdown')
         
@@ -236,7 +180,5 @@ Thank you for using the bot!"""
         
     except Exception as e:
         logger.error(f"Deployment error for {user_id}: {e}")
-        await status_msg.edit_text(
-            f"❌ **حدث خطأ أثناء النشر:**\n{str(e)}\n\nحاول مرة أخرى أو قم بالنشر يدوياً باستخدام ملف ZIP." if is_arabic
-            else f"❌ **Deployment Error:**\n{str(e)}\n\nPlease try again or deploy manually using the ZIP file."
-        )
+        error_msg = language_manager.get_text("deploy_error", user_language, error=str(e))
+        await status_msg.edit_text(error_msg)
