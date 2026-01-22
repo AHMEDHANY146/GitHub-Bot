@@ -316,56 +316,11 @@ class MarkdownGenerator:
         return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
     
     def _validate_structured_data(self, structured_data: Dict[str, any]) -> Dict[str, any]:
-        """Validate and clean structured data to ensure English-only content"""
-        cleaned_data = structured_data.copy()
-        
-        # Clean summary
-        if 'summary' in cleaned_data and cleaned_data['summary']:
-            summary = cleaned_data['summary']
-            if self._validate_english_response(summary) is None:
-                # Replace Arabic summary with English fallback
-                cleaned_data['summary'] = f"Passionate developer with expertise in {', '.join(cleaned_data.get('skills', ['software development'])[:3])}"
-        
-        # Clean skills list
-        if 'skills' in cleaned_data and cleaned_data['skills']:
-            cleaned_skills = []
-            for skill in cleaned_data['skills']:
-                if self._validate_english_response(skill) is not None:
-                    cleaned_skills.append(skill)
-            cleaned_data['skills'] = cleaned_skills
-        
-        # Clean languages list
-        if 'languages' in cleaned_data and cleaned_data['languages']:
-            cleaned_languages = []
-            for lang in cleaned_data['languages']:
-                if self._validate_english_response(lang) is not None:
-                    cleaned_languages.append(lang)
-            cleaned_data['languages'] = cleaned_languages
-        
-        return cleaned_data
+        """Clean structured data"""
+        return structured_data.copy()
 
     def _validate_english_response(self, response: str) -> str:
-        """Validate and clean AI response to ensure it's English only"""
-        if not response:
-            return response
-        
-        # Check for Arabic characters
-        arabic_chars = any('\u0600' <= char <= '\u06FF' for char in response)
-        
-        if arabic_chars:
-            # If Arabic detected, return fallback content
-            print("Arabic text detected in AI response, using fallback")
-            return None
-        
-        # Additional validation for common Arabic words
-        arabic_words = ['في', 'من', 'إلى', 'على', 'مع', 'خلال', 'بعد', 'قبل', 'حول', 'هذا', 'هذه', 'ذلك', 
-                        'تطوير', 'مطور', 'برمجة', 'مشاريع', 'خبرة', 'مهارات', 'لغات', 'أدوات']
-        
-        response_lower = response.lower()
-        if any(word in response_lower for word in arabic_words):
-            print("Arabic words detected in AI response, using fallback")
-            return None
-        
+        """Deprecated: Validation removed to allow multi-language support"""
         return response
 
     def _generate_dynamic_about_content(self, structured_data: Dict[str, any]) -> str:

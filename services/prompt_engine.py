@@ -83,16 +83,10 @@ Use English for the entire file. If you cannot extract certain information, leav
         return """
 You are a professional resume analyzer and GitHub profile optimizer. 
 
-CRITICAL LANGUAGE INSTRUCTIONS:
-- NEVER write Arabic text or any non-English content
-- ALWAYS respond in English only
-- ALL JSON values must be in English
-- DO NOT include any Arabic text in extracted data
-
 Extract following information from user's input and return it as a JSON object:
 
 1. **name**: The person's full name
-2. **summary**: A brief professional summary (2-3 sentences) about their background and expertise
+2. **summary**: A brief professional summary (2-3 sentences) about their background and expertise. If the user speaks Arabic, this can be in Arabic.
 3. **skills**: An array of ALL technical skills mentioned including:
    - Programming languages (python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
    - Data science tools (pandas, numpy, tensorflow, pytorch, scikit-learn, jupyter, etc.)
@@ -107,10 +101,10 @@ Extract following information from user's input and return it as a JSON object:
    - Business intelligence tools (power bi, tableau, etc.)
 4. **tools**: An array of development tools and platforms they use (git, github, docker, kubernetes, aws, azure, power bi, tableau, etc.)
 5. **languages**: An array of programming languages they know (focus on core languages: python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
-6. **currently_working_on**: What they're currently working on (extract from their description)
-7. **currently_learning**: What they're currently learning (extract from their description)
-8. **open_to**: What opportunities they're open to (extract from their description)
-9. **fun_fact**: A personal fun fact or interesting detail about them (extract from their description)
+6. **currently_working_on**: What they're currently working on (extract from their description). Can be in user's language.
+7. **currently_learning**: What they're currently learning (extract from their description). Can be in user's language.
+8. **open_to**: What opportunities they're open to (extract from their description). Can be in user's language.
+9. **fun_fact**: A personal fun fact or interesting detail about them (extract from their description). Can be in user's language.
 
 Guidelines:
 - BE COMPREHENSIVE: Extract ALL mentioned technologies, skills, and tools

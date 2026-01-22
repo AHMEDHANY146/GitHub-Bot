@@ -76,6 +76,14 @@ async def handle_rating_callback(update, context):
     session_id = context.user_data.get('session_id')
     save_rating(user_id, int(rating), session_id=session_id)
     
+    # Notify developer about rating
+    try:
+        user_name = update.effective_user.first_name
+        dev_message = f"🌟 New Rating!\nUser: {user_name} (ID: {user_id})\nRating: {stars}"
+        await context.bot.send_message(chat_id=settings.DEVELOPER_CHAT_ID, text=dev_message)
+    except Exception as e:
+        logger.error(f"Failed to notify developer about rating: {e}")
+    
     feedback_text = language_manager.get_text("rating_feedback_button", user_language)
     end_text = language_manager.get_text("rating_end_button", user_language)
     support_text = language_manager.get_text("rating_support_button", user_language)
@@ -169,6 +177,14 @@ async def handle_feedback_text(update, context):
         # Save feedback to database (update the existing rating with feedback)
         session_id = context.user_data.get('session_id')
         save_rating(user_id, 5, feedback_text=feedback_text, session_id=session_id)  # Default 5 stars if feedback provided
+        
+        # Notify developer about feedback
+        try:
+            user_name = update.effective_user.first_name
+            dev_message = f"💬 New Feedback!\nUser: {user_name} (ID: {user_id})\nMessage: {feedback_text}"
+            await context.bot.send_message(chat_id=settings.DEVELOPER_CHAT_ID, text=dev_message)
+        except Exception as e:
+            logger.error(f"Failed to notify developer about feedback: {e}")
         
         # Thank you message
         thank_you_text = language_manager.get_text("feedback_thanks", user_language)

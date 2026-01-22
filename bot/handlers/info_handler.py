@@ -367,11 +367,11 @@ async def handle_tech_stack_add(update: Update, text: str):
         # Show what was added
         details = ""
         if added_languages:
-            details += f"💻 **Languages:** {', '.join(added_languages)}\n"
+            details += f"💻 Languages: {', '.join(added_languages)}\n"
         if added_skills:
-            details += f"🛠️ **Skills:** {', '.join(added_skills)}\n"
+            details += f"🛠️ Skills: {', '.join(added_skills)}\n"
         if added_tools:
-            details += f"🔧 **Tools:** {', '.join(added_tools)}\n"
+            details += f"🔧 Tools: {', '.join(added_tools)}\n"
             
         result_text = language_manager.get_text("tech_stack_updated", user_language, details=details)
         

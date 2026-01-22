@@ -1,105 +1,66 @@
 """
 Database Models for GitHub README Bot
-Using SQLAlchemy ORM with PostgreSQL
+Using Pydantic for data validation (Supabase)
 """
 
 from datetime import datetime
-from typing import Optional, List
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, JSON, Float
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field
 
-Base = declarative_base()
-
-
-class User(Base):
+class User(BaseModel):
     """User model - stores Telegram user information"""
-    __tablename__ = 'users'
+    id: Optional[int] = None
+    telegram_id: int
+    name: Optional[str] = None
+    github_username: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    portfolio_url: Optional[str] = None
+    email: Optional[str] = None
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    telegram_id = Column(Integer, unique=True, nullable=False, index=True)
-    name = Column(String(100), nullable=True)
-    github_username = Column(String(50), nullable=True)
-    linkedin_url = Column(String(255), nullable=True)
-    portfolio_url = Column(String(255), nullable=True)
-    email = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Conversation State Persistence
+    state: Optional[str] = None
+    data: Optional[Dict[str, Any]] = Field(default_factory=dict)
     
-    # Relationships
-    sessions = relationship("ReadmeSession", back_populates="user", cascade="all, delete-orphan")
-    ratings = relationship("Rating", back_populates="user", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        return f"<User(telegram_id={self.telegram_id}, name='{self.name}')>"
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-
-class ReadmeSession(Base):
+class ReadmeSession(BaseModel):
     """README Generation Session - stores each README creation attempt"""
-    __tablename__ = 'readme_sessions'
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    id: Optional[int] = None
+    user_id: int
     
     # Input data
-    raw_input_text = Column(Text, nullable=True)  # Voice transcription or text input
+    raw_input_text: Optional[str] = None
     
     # Extracted structured data (stored as JSON)
-    structured_data = Column(JSON, nullable=True)
+    structured_data: Optional[Dict[str, Any]] = None
     
     # Generated output
-    generated_readme = Column(Text, nullable=True)
+    generated_readme: Optional[str] = None
     
     # Session status: 'pending', 'processing', 'completed', 'cancelled'
-    status = Column(String(20), default='pending')
+    status: str = 'pending'
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    completed_at = Column(DateTime, nullable=True)
-    
-    # Relationships
-    user = relationship("User", back_populates="sessions")
-    skills = relationship("UserSkill", back_populates="session", cascade="all, delete-orphan")
-    rating = relationship("Rating", back_populates="session", uselist=False)
-    
-    def __repr__(self):
-        return f"<ReadmeSession(id={self.id}, user_id={self.user_id}, status='{self.status}')>"
+    created_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
-
-class UserSkill(Base):
+class UserSkill(BaseModel):
     """User Skills extracted from README sessions"""
-    __tablename__ = 'user_skills'
+    id: Optional[int] = None
+    session_id: int
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(Integer, ForeignKey('readme_sessions.id', ondelete='CASCADE'), nullable=False)
-    
-    skill_name = Column(String(100), nullable=False)
+    skill_name: str
     # Category: 'programming_language', 'framework', 'tool', 'database', 'cloud', 'other'
-    category = Column(String(50), nullable=True)
-    has_icon = Column(Boolean, default=False)
-    
-    # Relationships
-    session = relationship("ReadmeSession", back_populates="skills")
-    
-    def __repr__(self):
-        return f"<UserSkill(skill_name='{self.skill_name}', category='{self.category}')>"
+    category: Optional[str] = None
+    has_icon: bool = False
 
-
-class Rating(Base):
+class Rating(BaseModel):
     """User Ratings and Feedback"""
-    __tablename__ = 'ratings'
+    id: Optional[int] = None
+    user_id: int
+    session_id: Optional[int] = None
     
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    session_id = Column(Integer, ForeignKey('readme_sessions.id', ondelete='SET NULL'), nullable=True)
+    stars: int
+    feedback_text: Optional[str] = None
     
-    stars = Column(Integer, nullable=False)  # 1-5 stars
-    feedback_text = Column(Text, nullable=True)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    user = relationship("User", back_populates="ratings")
-    session = relationship("ReadmeSession", back_populates="rating")
-    
-    def __repr__(self):
-        return f"<Rating(user_id={self.user_id}, stars={self.stars})>"
+    created_at: Optional[datetime] = None

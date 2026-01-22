@@ -80,7 +80,8 @@ async def language_selection_callback(update: Update, context: ContextTypes.DEFA
             
         # Skip info collection and go straight to experience
         # Send welcome message but with "Welcome back" context
-        welcome_text = language_manager.get_text("welcome_message", selected_language, name=db_user['name'])
+        display_name = db_user.get('name') or update.effective_user.first_name or "there"
+        welcome_text = language_manager.get_text("welcome_message", selected_language, name=display_name)
         
         # Change button to "Create New README" or similar context
         keyboard = [

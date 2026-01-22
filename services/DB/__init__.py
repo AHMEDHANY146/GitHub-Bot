@@ -2,22 +2,19 @@
 Database Package for GitHub README Bot
 """
 
-from .models import Base, User, ReadmeSession, UserSkill, Rating
-from .database import db_manager, get_db_session, init_database
+from .models import User, ReadmeSession, UserSkill, Rating
 from .services import UserService, SessionService, SkillService, RatingService
+from .client import get_supabase
 
 __all__ = [
     # Models
-    'Base',
     'User',
     'ReadmeSession', 
     'UserSkill',
     'Rating',
     
-    # Database
-    'db_manager',
-    'get_db_session',
-    'init_database',
+    # Client
+    'get_supabase',
     
     # Services
     'UserService',

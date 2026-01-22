@@ -77,10 +77,10 @@ def format_confirmation_text(structured_data: dict, user, user_language) -> str:
     
     # Build contact string
     contact_parts = []
-    if github: contact_parts.append(f"• **GitHub:** {github}")
-    if linkedin: contact_parts.append(f"• **LinkedIn:** {linkedin}")
-    if portfolio: contact_parts.append(f"• **Portfolio:** {portfolio}")
-    if email: contact_parts.append(f"• **Email:** {email}")
+    if github: contact_parts.append(f"• GitHub: {github}")
+    if linkedin: contact_parts.append(f"• LinkedIn: {linkedin}")
+    if portfolio: contact_parts.append(f"• Portfolio: {portfolio}")
+    if email: contact_parts.append(f"• Email: {email}")
     contact_info = "\n".join(contact_parts)
     
     # Build skills section

@@ -36,7 +36,7 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         voice_file = await update.message.voice.get_file()
         
         # Download voice file to temporary location
-        with tempfile.NamedTemporaryFile(suffix=".oga", delete=False) as temp_file:
+        with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as temp_file:
             await voice_file.download_to_drive(temp_file.name)
             temp_file_path = temp_file.name
         

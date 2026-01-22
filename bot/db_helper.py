@@ -192,6 +192,13 @@ def get_user(telegram_id: int) -> Optional[dict]:
     try:
         user = UserService.get_user_by_telegram_id(telegram_id)
         if user:
+            # Use model_dump to convert to dict, but ensure we return specific fields expected by legacy code
+            # Or better, just return the relevant fields or the whole dump
+            user_dict = user.model_dump()
+            
+            # Map newer fields to keys expected by legacy code if needed, 
+            # though get_user users seem to expect keys: telegram_id, name, github, linkedin, portfolio, email
+            # Our model already has snake_case fields matching DB.
             return {
                 'id': user.id,
                 'telegram_id': user.telegram_id,
@@ -199,10 +206,61 @@ def get_user(telegram_id: int) -> Optional[dict]:
                 'github': user.github_username,
                 'linkedin': user.linkedin_url,
                 'portfolio': user.portfolio_url,
-                'email': user.email
+                'email': user.email,
+                'state': user.state,
+                'data': user.data
             }
         return None
         
     except Exception as e:
         logger.error(f"Error getting user from database: {e}")
+        return None
+
+
+def update_user_state(telegram_id: int, state: str, data: Dict[str, Any] = None) -> bool:
+    """
+    Update user state and data in database
+    
+    Args:
+        telegram_id: Telegram user ID
+        state: New state string
+        data: User data dictionary
+    
+    Returns:
+        True if successful
+    """
+    if not _db_available:
+        return False
+        
+    try:
+        UserService.update_user(telegram_id, state=state, data=data)
+        return True
+    except Exception as e:
+        logger.error(f"Error updating user state: {e}")
+        return False
+
+
+def get_user_state(telegram_id: int) -> Optional[Dict[str, Any]]:
+    """
+    Get user state and data from database
+    
+    Args:
+        telegram_id: Telegram user ID
+    
+    Returns:
+        Dict with state and data, or None
+    """
+    if not _db_available:
+        return None
+        
+    try:
+        user = UserService.get_user_by_telegram_id(telegram_id)
+        if user:
+            return {
+                'state': user.state,
+                'data': user.data
+            }
+        return None
+    except Exception as e:
+        logger.error(f"Error getting user state: {e}")
         return None

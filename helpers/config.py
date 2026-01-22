@@ -10,6 +10,10 @@ class Settings(BaseSettings):
 
     TELEGRAM_BOT_TOKEN: str
 
+    # Supabase
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+
     # Backends
     STT_PROVIDER_MODEL_ID: str
     GENERATION_MODEL_ID: str
@@ -19,6 +23,10 @@ class Settings(BaseSettings):
     # API Keys
     COHERE_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    GROQ_API_KEY: Optional[str] = None
+    
+    # Developer
+    DEVELOPER_CHAT_ID: int = 1636741464
 
     model_config = SettingsConfigDict(
         env_file=".env",

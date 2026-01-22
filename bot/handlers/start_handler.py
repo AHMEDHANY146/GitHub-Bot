@@ -14,7 +14,7 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     # Save user to database
-    save_user(telegram_id=user_id)
+    save_user(telegram_id=user_id, name=update.effective_user.first_name)
     
     # Show language selection instead of direct start
     from bot.handlers.language_handler import show_language_selection
