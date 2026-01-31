@@ -24,7 +24,7 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
     # Only handle voice messages when waiting for experience
-    if user.state != BotState.WAITING_VOICE:
+    if user.state not in [BotState.WAITING_VOICE, BotState.WAITING_TEXT, BotState.WAITING_EDIT_TEXT]:
         await update.message.reply_text(language_manager.get_text("please_complete_previous_steps", user_language, default="Please complete the previous steps first. Use /start to begin."))
         return
     

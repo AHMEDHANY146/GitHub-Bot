@@ -27,7 +27,7 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_portfolio_input(update, text)
     elif user.state == BotState.WAITING_EMAIL:
         await handle_email_input(update, text)
-    elif user.state == BotState.WAITING_TEXT:
+    elif user.state in [BotState.WAITING_VOICE, BotState.WAITING_TEXT]:
         await handle_experience_text(update, text)
     elif user.state == BotState.WAITING_EDIT_TEXT:
         await handle_edit_experience_text(update, text)

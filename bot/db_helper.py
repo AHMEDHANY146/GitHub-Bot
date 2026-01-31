@@ -29,7 +29,7 @@ def save_user(telegram_id: int, **kwargs) -> Optional[int]:
     
     Args:
         telegram_id: Telegram user ID
-        **kwargs: User fields (name, github_username, linkedin_url, portfolio_url, email)
+        **kwargs: User fields (name, github, linkedin, portfolio, email)
     
     Returns:
         User database ID or None if database unavailable
@@ -38,12 +38,23 @@ def save_user(telegram_id: int, **kwargs) -> Optional[int]:
         return None
     
     try:
+        # Map legacy keys used in handlers to DB columns
+        db_map = {
+            'github': 'github_username',
+            'linkedin': 'linkedin_url',
+            'portfolio': 'portfolio_url'
+        }
+        
+        db_kwargs = {}
+        for k, v in kwargs.items():
+            db_kwargs[db_map.get(k, k)] = v
+            
         # Get or create user
         user = UserService.get_or_create_user(telegram_id)
         
         # Update with provided data
-        if kwargs:
-            user = UserService.update_user(telegram_id, **kwargs)
+        if db_kwargs:
+            user = UserService.update_user(telegram_id, **db_kwargs)
         
         logger.info(f"Saved user to database: telegram_id={telegram_id}")
         return user.id if user else None
@@ -233,7 +244,24 @@ def update_user_state(telegram_id: int, state: str, data: Dict[str, Any] = None)
         return False
         
     try:
-        UserService.update_user(telegram_id, state=state, data=data)
+        update_params = {'state': state}
+        if data:
+            update_params['data'] = data
+            
+            # Map keys from the 'data' blob to specific columns for redundancy and easy querying
+            db_map = {
+                'name': 'name',
+                'github': 'github_username',
+                'linkedin': 'linkedin_url',
+                'portfolio': 'portfolio_url',
+                'email': 'email'
+            }
+            
+            for key, col in db_map.items():
+                if key in data:
+                    update_params[col] = data[key]
+        
+        UserService.update_user(telegram_id, **update_params)
         return True
     except Exception as e:
         logger.error(f"Error updating user state: {e}")
@@ -256,9 +284,25 @@ def get_user_state(telegram_id: int) -> Optional[Dict[str, Any]]:
     try:
         user = UserService.get_user_by_telegram_id(telegram_id)
         if user:
+            # Sync individual columns back into the 'data' blob for the bot's runtime session
+            # This ensures that even if 'data' was empty but columns were populated, the bot sees it.
+            data = user.data or {}
+            
+            db_map = {
+                'name': user.name,
+                'github': user.github_username,
+                'linkedin': user.linkedin_url,
+                'portfolio': user.portfolio_url,
+                'email': user.email
+            }
+            
+            for key, value in db_map.items():
+                if value and key not in data:
+                    data[key] = value
+                    
             return {
                 'state': user.state,
-                'data': user.data
+                'data': data
             }
         return None
     except Exception as e:

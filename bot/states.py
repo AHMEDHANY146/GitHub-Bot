@@ -152,7 +152,7 @@ class ConversationManager:
         self.users[user_id] = user
         return user
     
-    def cleanup_inactive_users(self, ttl_seconds: int = 86400):
+    def cleanup_inactive_users(self, ttl_seconds: int = 604800):
         """Remove users from memory who haven't been active for ttl_seconds (default 24h)"""
         import time
         now = time.time()
