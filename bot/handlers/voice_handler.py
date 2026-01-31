@@ -116,7 +116,8 @@ async def process_user_data(update: Update, user_id: int):
         
         # Extract structured data
         schema = PromptEngine.get_structured_data_schema()
-        structured_data = llm_provider.extract_structured_data(experience_text, schema)
+        extraction_prompt = PromptEngine.get_structured_extraction_prompt()
+        structured_data = llm_provider.extract_structured_data(experience_text, schema, extraction_prompt)
         
         if not structured_data:
             await update.message.reply_text(

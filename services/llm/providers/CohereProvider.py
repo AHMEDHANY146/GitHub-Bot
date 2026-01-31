@@ -67,7 +67,7 @@ class CohereProvider(LLMInterface):
             "message": prompt
         }
 
-    def extract_structured_data(self, text: str, schema: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def extract_structured_data(self, text: str, schema: Dict[str, Any], prompt_template: str = None) -> Optional[Dict[str, Any]]:
         """Extract structured data from text following a specific schema"""
         try:
             if not self.client:
@@ -77,8 +77,12 @@ class CohereProvider(LLMInterface):
                 settings = get_settings()
                 self.generation_model_id = settings.GENERATION_MODEL_ID or 'command'
             
-            # Create prompt for structured data extraction
-            prompt = f"""
+            # Use provided template or default fallback
+            if prompt_template:
+                 prompt = f"{prompt_template}\n\nSchema:\n{json.dumps(schema, indent=2)}\n\nText to analyze:\n{text}"
+            else:
+                # Fallback internal prompt
+                prompt = f"""
 Extract the following information from the text and return it as a JSON object with this exact structure:
 {json.dumps(schema, indent=2)}
 
