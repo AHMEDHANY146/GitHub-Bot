@@ -13,8 +13,8 @@ async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the /start command and begin conversation"""
     user_id = update.effective_user.id
     
-    # Save user to database
-    save_user(telegram_id=user_id, name=update.effective_user.first_name)
+    # Save user to database (ensure user exists)
+    save_user(telegram_id=user_id)
     
     # Show language selection instead of direct start
     from bot.handlers.language_handler import show_language_selection
@@ -36,27 +36,25 @@ async def start_collection_callback(update: Update, context: ContextTypes.DEFAUL
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
     
-    # CHECK IF DATA WAS PRE-LOADED
+    # CHECK IF DATA WAS PRE-LOADED/EXISTS
     user_data = conversation_manager.get_user(user_id)
-    if user_data.get_data('name') and user_data.get_data('github'):
+    name = user_data.get_data('name')
+    github = user_data.get_data('github')
+    
+    if name and github:
         # Data exists, skip to experience collection
-        conversation_manager.update_user_state(user_id, BotState.WAITING_VOICE) # Or WAITING_TEXT
-        
-        name = user_data.get_data('name')
+        conversation_manager.update_user_state(user_id, BotState.WAITING_VOICE)
         prompt_text = language_manager.get_text("experience_prompt", user_language, name=name)
-        
-        logger.info(f"User {user_id} skipped to experience collection (data pre-loaded)")
+        logger.info(f"User {user_id} skipped to experience collection (data found)")
     else:
         # No data or incomplete data, start normal flow
-        # If they have a name but no github, it will start from WAITING_NAME but handle_name_input will move them forward.
-        # Actually, it's better to be specific.
-        if not user_data.get_data('name'):
+        if not name:
             conversation_manager.update_user_state(user_id, BotState.WAITING_NAME)
             prompt_text = language_manager.get_text("start_collection", user_language)
+            logger.info(f"User {user_id} starting info collection at WAITING_NAME")
         else:
             conversation_manager.update_user_state(user_id, BotState.WAITING_GITHUB)
-            prompt_text = language_manager.get_text("name_saved", user_language, name=user_data.get_data('name'))
-            
-        logger.info(f"User {user_id} started/continued info collection")
+            prompt_text = language_manager.get_text("name_saved", user_language, name=name)
+            logger.info(f"User {user_id} continuing info collection at WAITING_GITHUB")
     
     await query.edit_message_text(prompt_text)
