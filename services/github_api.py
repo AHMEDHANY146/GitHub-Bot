@@ -87,7 +87,7 @@ class GitHubAPI:
                 logger.error(f"Error creating repo: {e}")
                 return False
 
-    async def update_file(self, username: str, repo_name: str, path: str, content: str, message: str) -> bool:
+    async def update_file(self, username: str, repo_name: str, path: str, content: str, message: str, branch: str = "main") -> bool:
         """Create or update a file in the repository"""
         async with httpx.AsyncClient() as client:
             try:
@@ -97,11 +97,15 @@ class GitHubAPI:
                 
                 payload = {
                     "message": message,
-                    "content": enc_content
+                    "content": enc_content,
+                    "branch": branch
                 }
                 
                 # Check for existing file
-                get_response = await client.get(url, headers=self.headers)
+                # Use query parameter for branch in GET request
+                get_url = f"{url}?ref={branch}"
+                get_response = await client.get(get_url, headers=self.headers)
+                
                 if get_response.status_code == 200:
                     sha = get_response.json().get("sha")
                     payload["sha"] = sha

@@ -35,6 +35,8 @@ def setup_handlers(application: Application):
     # Command handlers
     application.add_handler(CommandHandler("start", start_handler))
     application.add_handler(CommandHandler("help", help_command))
+    from bot.handlers.reset_handler import reset_handler
+    application.add_handler(CommandHandler("reset", reset_handler))
     
     # Callback query handlers
     application.add_handler(CallbackQueryHandler(help_callback, pattern="^show_help$"))
@@ -47,6 +49,13 @@ def setup_handlers(application: Application):
     application.add_handler(CallbackQueryHandler(regenerate_readme_callback, pattern="^regenerate_readme$"))
     application.add_handler(CallbackQueryHandler(cancel_readme_callback, pattern="^cancel_readme$"))
     application.add_handler(CallbackQueryHandler(language_selection_callback, pattern="^lang_"))
+    
+    # Skill selection handlers
+    from bot.handlers.skill_handler import handle_skill_toggle, handle_skill_page, handle_skill_done, handle_skill_noop
+    application.add_handler(CallbackQueryHandler(handle_skill_toggle, pattern="^skill_toggle_"))
+    application.add_handler(CallbackQueryHandler(handle_skill_page, pattern="^skill_page_"))
+    application.add_handler(CallbackQueryHandler(handle_skill_done, pattern="^skill_done$"))
+    application.add_handler(CallbackQueryHandler(handle_skill_noop, pattern="^skill_noop$"))
     
     # Rating and feedback handlers
     application.add_handler(CallbackQueryHandler(handle_rating_callback, pattern="^rating_"))
@@ -156,8 +165,8 @@ Contact the developer: @Ahmedhany146
 They will help you solve any issue you face. Don't hesitate to reach out!"""
         alert_message = "❌ An error occurred. Contact @Ahmedhany146"
     
-    # Send user-friendly error message only if update is not None
-    if update is not None:
+    # Send user-friendly error message only if update and its components are available
+    if update:
         if update.message:
             await update.message.reply_text(support_message, parse_mode='Markdown')
         elif update.callback_query:
@@ -169,7 +178,8 @@ They will help you solve any issue you face. Don't hesitate to reach out!"""
             except:
                 # If answering fails, try to edit the message
                 try:
-                    await update.callback_query.message.reply_text(support_message, parse_mode='Markdown')
+                    if update.callback_query.message:
+                        await update.callback_query.message.reply_text(support_message, parse_mode='Markdown')
                 except:
                     # If all else fails, just log the error
                     logger.error("Could not send error message to user")

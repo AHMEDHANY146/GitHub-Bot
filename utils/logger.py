@@ -1,7 +1,35 @@
 import logging
 import os
+import re
 from datetime import datetime
 from typing import Optional
+
+
+class SecretScrubber(logging.Filter):
+    """Filter to scrub secrets from log messages"""
+    
+    SECRET_PATTERNS = [
+        r'ghp_[a-zA-Z0-9]{36}',
+        r'github_pat_[a-zA-Z0-9_]{82}',
+    ]
+    
+    def filter(self, record):
+        if not isinstance(record.msg, str):
+            return True
+            
+        for pattern in self.SECRET_PATTERNS:
+            record.msg = re.sub(pattern, '[REDACTED]', record.msg)
+            
+        if record.args:
+            new_args = []
+            for arg in record.args:
+                if isinstance(arg, str):
+                    for pattern in self.SECRET_PATTERNS:
+                        arg = re.sub(pattern, '[REDACTED]', arg)
+                new_args.append(arg)
+            record.args = tuple(new_args)
+            
+        return True
 
 
 class Logger:
@@ -36,10 +64,14 @@ class Logger:
             datefmt='%Y-%m-%d %H:%M:%S'
         )
         
+        # Scrub secrets
+        scrubber = SecretScrubber()
+        
         # Console handler
         console_handler = logging.StreamHandler()
         console_handler.setLevel(log_level)
         console_handler.setFormatter(formatter)
+        console_handler.addFilter(scrubber)
         logger.addHandler(console_handler)
         
         # File handler (if specified)
@@ -52,6 +84,7 @@ class Logger:
             file_handler = logging.FileHandler(log_file, encoding='utf-8')
             file_handler.setLevel(log_level)
             file_handler.setFormatter(formatter)
+            file_handler.addFilter(scrubber)
             logger.addHandler(file_handler)
         
         return logger

@@ -30,9 +30,24 @@ class LLMProviderFactory:
     
     @staticmethod
     def get_default_provider() -> LLMInterface:
-        """Get the default LLM provider based on available API keys"""
+        """Get the default LLM provider based on settings or available API keys"""
+        from helpers.config import get_settings
+        settings = get_settings()
+
+        # Check configured provider first
+        if settings.GENERATION_PROVIDER:
+            try:
+                if settings.GENERATION_PROVIDER == LLMEnums.GEMINI.value:
+                    if os.getenv('GEMINI_API_KEY'):
+                        return LLMProviderFactory.create_provider(LLMEnums.GEMINI.value)
+                elif settings.GENERATION_PROVIDER == LLMEnums.COHERE.value:
+                    if os.getenv('COHERE_API_KEY'):
+                        return LLMProviderFactory.create_provider(LLMEnums.COHERE.value)
+            except Exception:
+                # If configured provider fails (e.g. missing key), fall back to detection
+                pass
         
-        # Try Gemini first, then Cohere
+        # Fallback: Try Gemini first, then Cohere
         if os.getenv('GEMINI_API_KEY'):
             return LLMProviderFactory.create_provider(LLMEnums.GEMINI.value)
         elif os.getenv('COHERE_API_KEY'):

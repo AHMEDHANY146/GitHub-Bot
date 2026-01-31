@@ -179,3 +179,12 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Project specific
+outputs/
+logs/
+test_results.txt
+test_traceback.txt
+pytest_*.log
+*.log
+migration_state.sql

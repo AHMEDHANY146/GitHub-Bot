@@ -1,10 +1,11 @@
 from ..LLMInterface import LLMInterface
 from ..LLMEnums import GeminiEnums as GeminiRoleEnums
 import google.generativeai as genai
-import logging
 import json
+import logging
 from typing import Dict, Any, Optional
 from helpers.config import get_settings
+from utils.json_parser import safe_parse_json
 
 
 class GeminiProvider(LLMInterface):
@@ -101,8 +102,9 @@ IMPORTANT: Return ONLY the JSON object. No markdown formatting, no explanations,
                 response_text = response_text.strip()
                 
                 try:
-                    return json.loads(response_text)
-                except json.JSONDecodeError as e:
+                    # Use safe_parse_json for more robust extraction
+                    return safe_parse_json(response_text)
+                except Exception as e:
                     self.logger.error(f"Failed to parse JSON response: {e}")
                     self.logger.error(f"Raw response: {response_text}")
                     return None

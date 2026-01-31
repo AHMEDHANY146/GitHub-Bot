@@ -1,9 +1,11 @@
 from ..LLMInterface import LLMInterface
 from ..LLMEnums import CohereEnums as CohereRoleEnums
 import cohere
-import logging
 import json
+import logging
 from typing import Dict, Any, Optional
+from utils.json_parser import safe_parse_json
+from helpers.config import get_settings
 
 
 class CohereProvider(LLMInterface):
@@ -35,7 +37,8 @@ class CohereProvider(LLMInterface):
                 raise ValueError("Cohere client not initialized")
             
             if not hasattr(self, 'generation_model_id'):
-                self.generation_model_id = 'command'
+                settings = get_settings()
+                self.generation_model_id = settings.GENERATION_MODEL_ID or 'command'
             
             max_output_tokens = max_output_tokens if max_output_tokens else self.default_output_max_tokens
             temperature = temperature if temperature else self.default_generation_temperature
@@ -71,7 +74,8 @@ class CohereProvider(LLMInterface):
                 raise ValueError("Cohere client not initialized")
             
             if not hasattr(self, 'generation_model_id'):
-                self.generation_model_id = 'command'
+                settings = get_settings()
+                self.generation_model_id = settings.GENERATION_MODEL_ID or 'command'
             
             # Create prompt for structured data extraction
             prompt = f"""
@@ -104,8 +108,9 @@ IMPORTANT: Return ONLY the JSON object. No markdown formatting, no explanations,
                 response_text = response_text.strip()
                 
                 try:
-                    return json.loads(response_text)
-                except json.JSONDecodeError as e:
+                    # Use safe_parse_json for more robust extraction
+                    return safe_parse_json(response_text)
+                except Exception as e:
                     self.logger.error(f"Failed to parse JSON response: {e}")
                     self.logger.error(f"Raw response: {response_text}")
                     return None

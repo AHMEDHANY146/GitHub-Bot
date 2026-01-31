@@ -5,11 +5,10 @@ import tempfile
 import zipfile
 from io import BytesIO
 from bot.states import BotState, conversation_manager
-from utils.language import language_manager
+from utils.language import language_manager, Language
 from utils.logger import Logger
 from bot.handlers import voice_handler
 from bot.handlers.rating_handler import show_rating_prompt
-from utils.language import Language
 from bot.db_helper import save_user, create_readme_session, complete_readme_session
 
 logger = Logger.get_logger(__name__)
@@ -197,21 +196,17 @@ async def approve_readme_callback(update: Update, context: ContextTypes.DEFAULT_
 
 
 async def edit_skills_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle edit skills callback"""
+    """Handle edit skills callback - show skill selection screen"""
     query = update.callback_query
     await query.answer()
     
     user_id = update.effective_user.id
-    user_language_code = conversation_manager.get_user_language(user_id)
-    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
-    # Move back to text input for editing
-    conversation_manager.update_user_state(user_id, BotState.WAITING_TEXT)
+    # Show skill selection screen
+    from bot.handlers.skill_handler import show_skill_selection
+    await show_skill_selection(update, user_id)
     
-    edit_text = language_manager.get_text("edit_prompt", user_language)
-    
-    await query.edit_message_text(edit_text)
-    logger.info(f"User {user_id} chose to edit skills")
+    logger.info(f"User {user_id} chose to edit skills (selection mode)")
 
 
 async def edit_contact_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -337,47 +332,18 @@ async def generate_and_send_zip(update: Update, context: ContextTypes.DEFAULT_TY
             # Add README.md
             zip_file.writestr("README.md", readme_content.encode('utf-8'))
             
-            # Add snake.yml workflow file
-            snake_workflow = """name: Generate snake animation
-
-on:
-  schedule:
-    - cron: "0 */12 * * *"
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-
-jobs:
-  generate:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Generate snake animation
-        uses: Platane/snk@v3
-        with:
-          github_user_name: ${{ github.repository_owner }}
-          outputs: |
-            dist/snake.svg
-            dist/snake-dark.svg?palette=github-dark
-            dist/snake.gif?color_snake=orange&color_dots=#bfd6f6,#8dbdff,#64a1f4,#4b91f1,#3c7dd9
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy to output branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: output
-          publish_dir: ./dist
-          force_orphan: true"""
+            # Load snake.yml workflow from template
+            template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
+                                         'resources', 'templates', 'snake.yml')
+            try:
+                with open(template_path, 'r', encoding='utf-8') as f:
+                    snake_workflow = f.read()
+            except Exception as e:
+                logger.error(f"Error loading snake template: {e}")
+                snake_workflow = ""
             
-            zip_file.writestr(".github/workflows/snake.yml", snake_workflow.encode('utf-8'))
+            if snake_workflow:
+                zip_file.writestr(".github/workflows/snake.yml", snake_workflow.encode('utf-8'))
         
         zip_buffer.seek(0)
         

@@ -4,15 +4,16 @@
 
 ## ✨ Features
 
+- 🌍 **Multi-Language Support**: Full support for English, Arabic (MSA), and Egyptian Arabic
 - 🎤 **Voice Processing**: Convert voice messages to text using advanced STT services
 - 🤖 **AI-Powered**: Leverages multiple LLM providers (Cohere, Gemini) for intelligent content generation
 - 📝 **README Generation**: Automatically creates professional GitHub README files in markdown format
+- 🔘 **Interactive Skills**: Easy-to-use button interface for selecting and toggling skills
+- 🐍 **Snake Animation**: Automated setup for GitHub contribution graph snake animation
 - 🎨 **Devicon Integration**: Maps technical skills to appropriate devicons for visual enhancement
-- 🌸 **Unified Design**: Consistent, modern design across all generated READMEs with flowers/features
-- 📬 **Contact Priority**: LinkedIn and Email prominently displayed at the top
-- 🔄 **Multi-Provider Support**: Configurable STT and LLM providers for flexibility
-- 📊 **Structured Output**: Generates well-organized markdown with proper formatting
-- 🏷️ **Smart Icon Mapping**: Comprehensive skill-to-icon mapping with fallbacks
+- 🌸 **Unified Design**: Consistent, modern design across all generated READMEs
+- 💾 **Supabase Integration**: Persistent storage for user data and state management
+- 🔄 **Auto-Deployment**: Automatically pushes generated README and workflows to GitHub
 
 ## Project Structure
 
@@ -79,23 +80,27 @@ GitHub-Bot/
 ## Setup
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd GitHub-Bot
    ```
 
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 3. Configure environment variables:
+
    ```bash
    cp .env.example .env
    # Edit .env with your API keys and configuration
    ```
 
 4. Run the bot:
+
    ```bash
    python bot/main.py
    ```
@@ -105,8 +110,13 @@ GitHub-Bot/
 The bot requires the following environment variables:
 
 - `TELEGRAM_BOT_TOKEN`: Your Telegram bot token from @BotFather
-- `COHERE_API_KEY`: Cohere API key (if using Cohere provider)
-- `GEMINI_API_KEY`: Google Gemini API key (if using Gemini provider)
+- `GEMINI_API_KEY`: Google Gemini API key (Required)
+- `COHERE_API_KEY`: Cohere API key (Optional)
+- `SUPABASE_URL`: Your Supabase project URL
+- `SUPABASE_KEY`: Your Supabase service role key (for database access)
+- `GROQ_API_KEY`: Groq API key (Optional)
+
+> **Note**: For auto-deployment and snake animation features, users need to provide a GitHub Personal Access Token (PAT) with `repo` and `workflow` scopes.
 
 ## Usage
 

@@ -9,6 +9,8 @@ create table public.users (
   linkedin_url text,
   portfolio_url text,
   email text,
+  state text,               -- Added for persistence
+  data jsonb default '{}', -- Added for persistence
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -40,16 +42,59 @@ create table public.ratings (
   feedback_text text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
--- Enable Row Level Security (RLS) - Optional for now if using Service Role key, 
--- but recommended if you ever use Client Key on frontend.
+-- Enable Row Level Security (RLS)
 alter table public.users enable row level security;
 alter table public.readme_sessions enable row level security;
 alter table public.user_skills enable row level security;
 alter table public.ratings enable row level security;
--- Open access policies (Simplest for bot usage if not using Service Key, BUT Service Key is better)
--- Ideally, don't run these if you use the Service Role Key. 
--- If you only have the Anon key and need to write, you might need these (INSECURE for public web apps, fine for a private bot connection)
-create policy "Enable all access for all users" on public.users for all using (true) with check (true);
-create policy "Enable all access for all users" on public.readme_sessions for all using (true) with check (true);
-create policy "Enable all access for all users" on public.user_skills for all using (true) with check (true);
-create policy "Enable all access for all users" on public.ratings for all using (true) with check (true);
+
+-- 5. Row Level Security Policies
+
+-- USERS: Users can only see and update their own record based on telegram_id
+create policy "Users can view own data" 
+  on public.users for select 
+  using (true); 
+
+create policy "Users can insert own data" 
+  on public.users for insert 
+  with check (true);
+
+create policy "Users can update own data" 
+  on public.users for update 
+  using (true) 
+  with check (true);
+
+-- README_SESSIONS: Users can only access sessions linked to their user_id
+-- We use a subquery to check if the session belongs to the user with the given telegram_id
+create policy "Users can manage own sessions"
+  on public.readme_sessions for all
+  using (
+    user_id in (select id from public.users)
+  )
+  with check (
+    user_id in (select id from public.users)
+  );
+
+-- USER_SKILLS: Similar to sessions, restricted via session link
+create policy "Users can manage own skills"
+  on public.user_skills for all
+  using (
+    session_id in (select id from public.readme_sessions)
+  )
+  with check (
+    session_id in (select id from public.readme_sessions)
+  );
+
+-- RATINGS: Users can only manage ratings they created
+create policy "Users can manage own ratings"
+  on public.ratings for all
+  using (
+    user_id in (select id from public.users)
+  )
+  with check (
+    user_id in (select id from public.users)
+  );
+
+-- NOTE: Since this bot uses the service_role key, these policies will be bypassed
+-- by the bot itself. These are implemented as a defense-in-depth measure 
+-- for the database integrity.

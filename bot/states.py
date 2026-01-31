@@ -17,6 +17,8 @@ class BotState(Enum):
     WAITING_EMAIL = "waiting_email"
     WAITING_VOICE = "waiting_voice"
     WAITING_TEXT = "waiting_text"
+    WAITING_EDIT_TEXT = "waiting_edit_text"
+    WAITING_SKILL_SELECTION = "waiting_skill_selection"
     WAITING_CONTACT = "waiting_contact"
     WAITING_TECH_STACK = "waiting_tech_stack"
     PROCESSING = "processing"
@@ -34,16 +36,22 @@ class UserData:
         self.data = {}
         self.temp_files = []
         self._dirty = False  # Track if needs saving
+        import time
+        self.last_updated = time.time()
     
     def update_state(self, new_state: BotState):
         """Update conversation state"""
+        import time
         self.state = new_state
+        self.last_updated = time.time()
         self._dirty = True
         self.save()
     
     def add_data(self, key: str, value: Any):
         """Add data to user profile"""
+        import time
         self.data[key] = value
+        self.last_updated = time.time()
         self._dirty = True
         self.save()
     
@@ -105,9 +113,22 @@ class ConversationManager:
     
     def get_user(self, user_id: int) -> UserData:
         """Get or create user data (loads from DB if not in memory)"""
+        import time
+        now = time.time()
+        
+        # Periodically cleanup inactive users (every 100 calls or so)
+        if not hasattr(self, '_cleanup_counter'):
+            self._cleanup_counter = 0
+        self._cleanup_counter += 1
+        if self._cleanup_counter > 100:
+            self.cleanup_inactive_users()
+            self._cleanup_counter = 0
+
         # 1. Check memory
         if user_id in self.users:
-            return self.users[user_id]
+            user = self.users[user_id]
+            user.last_updated = now
+            return user
             
         # 2. Try load from DB
         try:
@@ -117,6 +138,7 @@ class ConversationManager:
             if db_state:
                 # Reconstruct user from DB
                 user = UserData.from_db(user_id, db_state.get('state'), db_state.get('data'))
+                user.last_updated = now
                 self.users[user_id] = user
                 return user
         except ImportError:
@@ -125,9 +147,30 @@ class ConversationManager:
             print(f"Error loading user from DB: {e}")
             
         # 3. Create new if not found
-        self.users[user_id] = UserData(user_id)
-        return self.users[user_id]
+        user = UserData(user_id)
+        user.last_updated = now
+        self.users[user_id] = user
+        return user
     
+    def cleanup_inactive_users(self, ttl_seconds: int = 86400):
+        """Remove users from memory who haven't been active for ttl_seconds (default 24h)"""
+        import time
+        now = time.time()
+        to_remove = []
+        
+        for uid, user in self.users.items():
+            if now - user.last_updated > ttl_seconds:
+                # Save just in case it's dirty
+                if user._dirty:
+                    user.save()
+                to_remove.append(uid)
+        
+        for uid in to_remove:
+            del self.users[uid]
+        
+        if to_remove:
+            print(f"Cleaned up {len(to_remove)} inactive users from memory")
+
     def update_user_state(self, user_id: int, state: BotState):
         """Update user conversation state"""
         user = self.get_user(user_id)

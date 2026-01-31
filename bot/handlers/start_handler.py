@@ -38,7 +38,7 @@ async def start_collection_callback(update: Update, context: ContextTypes.DEFAUL
     
     # CHECK IF DATA WAS PRE-LOADED
     user_data = conversation_manager.get_user(user_id)
-    if user_data.get_data('name'):
+    if user_data.get_data('name') and user_data.get_data('github'):
         # Data exists, skip to experience collection
         conversation_manager.update_user_state(user_id, BotState.WAITING_VOICE) # Or WAITING_TEXT
         
@@ -47,9 +47,16 @@ async def start_collection_callback(update: Update, context: ContextTypes.DEFAUL
         
         logger.info(f"User {user_id} skipped to experience collection (data pre-loaded)")
     else:
-        # No data, start normal flow
-        conversation_manager.update_user_state(user_id, BotState.WAITING_NAME)
-        prompt_text = language_manager.get_text("start_collection", user_language)
-        logger.info(f"User {user_id} started info collection")
+        # No data or incomplete data, start normal flow
+        # If they have a name but no github, it will start from WAITING_NAME but handle_name_input will move them forward.
+        # Actually, it's better to be specific.
+        if not user_data.get_data('name'):
+            conversation_manager.update_user_state(user_id, BotState.WAITING_NAME)
+            prompt_text = language_manager.get_text("start_collection", user_language)
+        else:
+            conversation_manager.update_user_state(user_id, BotState.WAITING_GITHUB)
+            prompt_text = language_manager.get_text("name_saved", user_language, name=user_data.get_data('name'))
+            
+        logger.info(f"User {user_id} started/continued info collection")
     
     await query.edit_message_text(prompt_text)

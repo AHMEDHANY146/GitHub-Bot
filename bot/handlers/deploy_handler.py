@@ -109,60 +109,48 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
         )
         if not success:
             raise Exception("Failed to upload README.md")
+        
+        # Wait for GitHub to propagate the README commit before creating workflow
+        await asyncio.sleep(2)
             
         # 5. Upload Snake Workflow
         await status_msg.edit_text(
             language_manager.get_text("setting_up_snake", user_language)
         )
         
-        snake_workflow = """name: Generate snake animation
-
-on:
-  schedule:
-    - cron: "0 */12 * * *"
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-
-jobs:
-  generate:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Generate snake animation
-        uses: Platane/snk@v3
-        with:
-          github_user_name: ${{ github.repository_owner }}
-          outputs: |
-            dist/snake.svg
-            dist/snake-dark.svg?palette=github-dark
-            dist/snake.gif?color_snake=orange&color_dots=#bfd6f6,#8dbdff,#64a1f4,#4b91f1,#3c7dd9
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy to output branch
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: output
-          publish_dir: ./dist
-          force_orphan: true"""
-          
-        success = await github.update_file(
-            username, repo_name,
-            ".github/workflows/snake.yml",
-            snake_workflow,
-            "Add Snake Animation Workflow"
-        )
+        # Load snake.yml workflow from template
+        import os
+        template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
+                                     'resources', 'templates', 'snake.yml')
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                snake_workflow = f.read()
+        except Exception as e:
+            logger.error(f"Error loading snake template: {e}")
+            snake_workflow = ""
+        
+        if not snake_workflow:
+            raise Exception("Required workflow template 'snake.yml' missing")
+        
+        # Try to upload snake.yml with retries
+        snake_success = False
+        for attempt in range(3):
+            snake_success = await github.update_file(
+                username, repo_name,
+                ".github/workflows/snake.yml",
+                snake_workflow,
+                "Add Snake Animation Workflow"
+            )
+            if snake_success:
+                break
+            logger.warning(f"Snake workflow upload attempt {attempt+1} failed, retrying...")
+            await asyncio.sleep(2)
+        
+        if not snake_success:
+            logger.warning(f"Failed to upload snake workflow after 3 attempts for user {user_id}")
         
         # 6. Trigger Workflow
-        if success:
+        if snake_success:
             await github.trigger_workflow(username, repo_name, "snake.yml")
             
         # 7. Success!

@@ -26,10 +26,10 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     
     # Developer
-    DEVELOPER_CHAT_ID: int = 1636741464
+    DEVELOPER_CHAT_ID: Optional[int] = None
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=f"{__import__('os').path.dirname(__import__('os').path.dirname(__import__('os').path.abspath(__file__)))}/.env",
         env_file_encoding="utf-8",
         extra="ignore"
     )

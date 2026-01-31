@@ -58,7 +58,9 @@ class MarkdownGenerator:
                 unique_skills.append(skill)
         
         if unique_skills:
-            sections.append(self._generate_skills_section(unique_skills))
+            # Pass languages as exclusion list to avoid duplicates
+            excluded_langs = structured_data.get('languages', [])
+            sections.append(self._generate_skills_section(unique_skills, exclude=excluded_langs))
         
         # Snake animation (GitHub username is now required)
         if structured_data.get('github'):
@@ -189,8 +191,16 @@ class MarkdownGenerator:
 {languages_text}
 </div>"""
     
-    def _generate_skills_section(self, skills: List[str]) -> str:
+    def _generate_skills_section(self, skills: List[str], exclude: List[str] = None) -> str:
         """Generate unified Tech Stack section with all icons"""
+        if not skills:
+            return ""
+            
+        # Filter out excluded skills (like those already shown in languages)
+        if exclude:
+            exclude_set = {s.lower().strip() for s in exclude}
+            skills = [s for s in skills if s.lower().strip() not in exclude_set]
+        
         if not skills:
             return ""
         
@@ -202,14 +212,12 @@ class MarkdownGenerator:
             
         skills_text = '\n'.join(skill_entries)
         
-        return f"""### 🛠️ Tech Stack
-        
-<div align="left">
+        return f"""<div align="left">
 {skills_text}
 </div>"""
     
     def _generate_skill_entries(self, skills: List[str]) -> List[str]:
-        """Generate HTML entries for skills with icons - only includes skills with valid icons"""
+        """Generate HTML entries for skills with icons - includes text fallback"""
         skill_entries = []
         
         # Get icons for all skills
@@ -217,15 +225,113 @@ class MarkdownGenerator:
         
         # Custom icon mappings for popular tools not in standard devicon
         custom_icons = {
+            # Data Science
             'scikit': 'https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg',
             'sklearn': 'https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg',
             'scikit-learn': 'https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg',
+            'pandas': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pandas/pandas-original.svg',
+            'numpy': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/numpy/numpy-original.svg',
+            'matplotlib': 'https://upload.wikimedia.org/wikipedia/commons/8/84/Matplotlib_icon.svg',
+            'jupyter': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jupyter/jupyter-original.svg',
+            'opencv': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/opencv/opencv-original.svg',
+            
+            # Concepts/Abstract
+            'machine learning': 'https://upload.wikimedia.org/wikipedia/commons/2/2d/Tensorflow_logo.svg', # Using TF as proxy
+            'deep learning': 'https://upload.wikimedia.org/wikipedia/commons/1/10/PyTorch_logo_icon.svg', # Using PyTorch as proxy
+            'sql': 'https://upload.wikimedia.org/wikipedia/commons/8/87/Sql_data_base_with_logo.png',
+            'excel': 'https://upload.wikimedia.org/wikipedia/commons/7/73/Microsoft_Excel_2013-2019_logo.svg',
+            
+            # AI/ML
+            'tensorflow': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tensorflow/tensorflow-original.svg',
+            'pytorch': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/pytorch/pytorch-original.svg',
+            'keras': 'https://upload.wikimedia.org/wikipedia/commons/a/ae/Keras_logo.svg',
+            'langchain': 'https://raw.githubusercontent.com/langchain-ai/langchain/master/docs/static/img/brand/langchain_logo.svg',
+            'huggingface': 'https://huggingface.co/front/assets/huggingface_logo.svg',
+            'hugging face': 'https://huggingface.co/front/assets/huggingface_logo.svg',
+            'openai': 'https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg',
+            'gemini': 'https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg',
+            'cohere': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Cohere_logo.png/640px-Cohere_logo.png',
+            
+            # BI Tools
             'power bi': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
             'powerbi': 'https://upload.wikimedia.org/wikipedia/commons/c/cf/New_Power_BI_Logo.svg',
             'tableau': 'https://cdn.worldvectorlogo.com/logos/tableau-software.svg',
-            'langchain': 'https://raw.githubusercontent.com/langchain-ai/langchain/master/docs/static/img/brand/langchain_logo.svg',
-            'huggingface': 'https://huggingface.co/front/assets/huggingface_logo.svg',
+            
+            # Backend
             'fastapi': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/fastapi/fastapi-original.svg',
+            'flask': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flask/flask-original.svg',
+            'django': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/django/django-plain.svg',
+            'express': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg',
+            'nestjs': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nestjs/nestjs-original.svg',
+            'graphql': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/graphql/graphql-plain.svg',
+            
+            # Frontend
+            'next.js': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
+            'nextjs': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg',
+            'nuxt': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nuxtjs/nuxtjs-original.svg',
+            'nuxt.js': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nuxtjs/nuxtjs-original.svg',
+            'tailwind': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg',
+            'tailwindcss': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg',
+            'vite': 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Vitejs-logo.svg',
+            'svelte': 'https://upload.wikimedia.org/wikipedia/commons/1/1b/Svelte_Logo.svg',
+            
+            # Databases
+            'supabase': 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Supabase_logo.svg',
+            'firebase': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg',
+            'redis': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/redis/redis-original.svg',
+            'mongodb': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg',
+            'postgresql': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
+            'mysql': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg',
+            'sqlite': 'https://upload.wikimedia.org/wikipedia/commons/3/38/SQLite370.svg',
+            
+            # DevOps
+            'docker': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg',
+            'kubernetes': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-plain.svg',
+            'github actions': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/githubactions/githubactions-original.svg',
+            'terraform': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg',
+            'ansible': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ansible/ansible-original.svg',
+            'jenkins': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/jenkins/jenkins-original.svg',
+            'nginx': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg',
+            'linux': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg',
+            'bash': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg',
+            
+            # Cloud
+            'aws': 'https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg',
+            'azure': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg',
+            'gcp': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg',
+            'heroku': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/heroku/heroku-original.svg',
+            'vercel': 'https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png',
+            
+            # Mobile
+            'flutter': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg',
+            'react native': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg',
+            'android': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/android/android-original.svg',
+            'ios': 'https://upload.wikimedia.org/wikipedia/commons/6/64/Android_logo_2019_%28stacked%29.svg', # Placeholder fallback
+            'swift': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/swift/swift-original.svg',
+            'kotlin': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg',
+            
+            # Languages
+            'python': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg',
+            'javascript': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
+            'typescript': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+            'java': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
+            'c': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg',
+            'c++': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+            'c#': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg',
+            'go': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original.svg',
+            'rust': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/rust/rust-original.svg',
+            'php': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg',
+            'ruby': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg',
+            'r': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/r/r-original.svg',
+            
+            # Tools
+            'git': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg',
+            'github': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg',
+            'vscode': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vscode/vscode-original.svg',
+            'figma': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg',
+            'postman': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postman/postman-original.svg',
+            'selenium': 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Selenium_Logo.png',
+            'streamlit': 'https://streamlit.io/images/brand/streamlit-mark-color.svg',
         }
         
         for skill in skills:
@@ -234,16 +340,31 @@ class MarkdownGenerator:
             # First check if we have an icon from devicon
             icon_url = skill_icons.get(skill)
             
-            # If not, check custom icons
+            # If not, check custom icons (try exact match first)
+            if not icon_url:
+                icon_url = custom_icons.get(skill_lower)
+            
+            # If still not, try partial match in custom icons
             if not icon_url:
                 for key, url in custom_icons.items():
-                    if key in skill_lower:
-                        icon_url = url
-                        break
+                    if key == skill_lower: # Exact match has priority
+                         icon_url = url
+                         break
             
-            # Only add skills that have icons
+            # Final attempt: try to find loose match
+            if not icon_url:
+                for key, url in custom_icons.items():
+                     if key in skill_lower:
+                         icon_url = url
+                         break
+
+            # Add skill entry (Image if found, formatted text badge if not)
             if icon_url:
                 skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill.title()}" />')
+            else:
+                # Fallback to Shields.io badge for missing icons so it's not hidden
+                encoded_skill = skill.replace(' ', '%20')
+                skill_entries.append(f'  <img src="https://img.shields.io/badge/{encoded_skill}-333333?style=flat&logo=github" height="30" alt="{skill}" />')
         
         return skill_entries
     
@@ -282,21 +403,22 @@ class MarkdownGenerator:
 
     
     def _generate_snake_animation(self, structured_data: Dict[str, any]) -> str:
-        """Generate snake animation section"""
+        """Generate snake animation section from template"""
         github_username = structured_data.get('github', '')
         
-        # Only generate snake animation if username is provided
         if not github_username:
             return ""
-        
-        return f"""
----
-
-## 🐍 Contribution Graph
-
-<div align="center">
-  <img src="https://github.com/{github_username}/{github_username}/blob/output/snake-dark.svg" alt="Snake animation" />
-</div>"""
+            
+        import os
+        template_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                                     'resources', 'templates', 'snake_section.md')
+        try:
+            with open(template_path, 'r', encoding='utf-8') as f:
+                template = f.read()
+            return template.format(github_username=github_username)
+        except Exception as e:
+            # Fallback to hardcoded if template fails
+            return f"\n---\n\n## 🐍 Contribution Graph\n\n<div align=\"center\">\n  <img src=\"https://github.com/{github_username}/{github_username}/blob/output/snake-dark.svg\" alt=\"Snake animation\" />\n</div>"
     
     def _generate_profile_header(self, structured_data: Dict[str, any], github_username: str) -> str:
         """Generate standardized modern profile header"""
@@ -367,30 +489,33 @@ CRITICAL LANGUAGE INSTRUCTIONS:
 - DO NOT include any Arabic introductions, greetings, or explanations
 - ALL output must be in English language exclusively
 
+Developer Info:
 Name: {name}
 Skills: {', '.join(skills) if skills else 'Not specified'}
 Programming Languages: {', '.join(languages) if languages else 'Not specified'}
-Summary: {summary}
+Background/Summary: {summary}
 
 Requirements:
 1. SUBTITLE: Generate a professional subtitle (under 80 characters, 2-3 roles separated by " | ", with emojis)
-2. ABOUT ME: Generate 2-3 bullet points highlighting expertise (friendly, professional tone, under 150 words total)
+   - Should reflect their main role and expertise
+   - Example: " Data Scientist | ML Engineer | Analytics Expert"
+
+2. ABOUT ME: Generate 3-4 bullet points that tell their PROFESSIONAL STORY:
+   - STRICTLY use the provided 'Background/Summary' information.
+   - DO NOT hallucinate or invent new experiences, companies, or skills not mentioned.
+   - DO NOT mention any skills/tools that are not listed in the 'Developer Info' above.
+   - You can rephrase and polish the English to make it professional, but keep the FACTS unchanged.
+   - Focus on EXPERIENCE and ACHIEVEMENTS mentioned by the user.
+   - Under 180 words total.
 
 Format your response exactly like this:
 SUBTITLE: [your subtitle here]
 ABOUT:
-  - [first bullet point]
-  - [second bullet point]
-  - [third bullet point if applicable]
+  - 🎯 [Experience bullet based on input]
+  - 💼 [Work/Domain bullet based on input]  
+  - 🚀 [Achievement/Current focus bullet based on input]
 
-Examples:
-SUBTITLE: 🔬 Data Analyst | 🤖 AI Enthusiast | 📊 Problem Solver
-ABOUT:
-  - 💡 Specializing in data analysis and machine learning with Python
-  - 🚀 Experienced in creating insights from complex datasets
-  - 🎯 Passionate about solving real-world problems with data
-
-CRITICAL: Start directly with "SUBTITLE:", no introduction."""
+CRITICAL: Start directly with "SUBTITLE:", no introduction. STAY FAITHFUL TO THE INPUT."""
 
         try:
             response = self.llm_provider.generate_text(prompt, [], max_output_tokens=300, temperature=0.7)

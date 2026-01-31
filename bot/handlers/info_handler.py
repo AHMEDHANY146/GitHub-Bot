@@ -29,6 +29,8 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_email_input(update, text)
     elif user.state == BotState.WAITING_TEXT:
         await handle_experience_text(update, text)
+    elif user.state == BotState.WAITING_EDIT_TEXT:
+        await handle_edit_experience_text(update, text)
     elif user.state == BotState.WAITING_CONTACT:
         await handle_contact_edit(update, text)
     elif user.state == BotState.WAITING_TECH_STACK:
@@ -77,12 +79,8 @@ async def handle_github_input(update: Update, github: str):
     # Ask for LinkedIn (skip profile style selection)
     conversation_manager.update_user_state(user_id, BotState.WAITING_LINKEDIN)
     
-    keyboard = [[InlineKeyboardButton(language_manager.get_text("skip_button", user_language), callback_data="skip_linkedin")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
     await update.message.reply_text(
-        language_manager.get_text("github_saved", user_language, github=github),
-        reply_markup=reply_markup
+        language_manager.get_text("github_saved", user_language, github=github)
     )
     logger.info(f"User {user_id} provided GitHub: {github}")
 
@@ -169,7 +167,7 @@ async def handle_email_input(update: Update, email: str):
 
 
 async def handle_experience_text(update: Update, text: str):
-    """Handle experience text input"""
+    """Handle experience text input (first time)"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
     
@@ -187,6 +185,25 @@ async def handle_experience_text(update: Update, text: str):
     logger.info(f"User {user_id} provided experience text")
 
 
+async def handle_edit_experience_text(update: Update, text: str):
+    """Handle editing experience text (appending to existing)"""
+    user_id = update.effective_user.id
+    
+    # Get existing text
+    user = conversation_manager.get_user(user_id)
+    existing_text = user.get_data('experience_text', '')
+    
+    # Append new text
+    combined_text = f"{existing_text}\n\n{text}".strip()
+    
+    # Save combined experience text
+    conversation_manager.add_user_data(user_id, 'experience_text', combined_text)
+    
+    # Move to processing
+    await start_processing(update, user_id)
+    logger.info(f"User {user_id} appended experience text (edit mode)")
+
+
 async def skip_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle skip field callbacks"""
     query = update.callback_query
@@ -198,7 +215,10 @@ async def skip_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # Determine which field to skip and move to next
     if user.state == BotState.WAITING_GITHUB:
-        await start_experience_collection(update, user_id)
+        # GitHub is now mandatory, if they somehow trigger skip, just repeat
+        prompt_text = language_manager.get_text("invalid_github", user_language)
+        await query.edit_message_text(prompt_text)
+        return
     elif user.state == BotState.WAITING_LINKEDIN:
         conversation_manager.update_user_state(user_id, BotState.WAITING_PORTFOLIO)
         keyboard = [[InlineKeyboardButton(language_manager.get_text("skip_button", user_language), callback_data="skip_portfolio")]]

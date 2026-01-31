@@ -67,7 +67,7 @@ async def language_selection_callback(update: Update, context: ContextTypes.DEFA
     from bot.db_helper import get_user
     db_user = get_user(user_id)
     
-    if db_user:
+    if db_user and db_user.get('name') and db_user.get('github'):
         # Load data into conversation manager
         conversation_manager.add_user_data(user_id, 'name', db_user['name'])
         conversation_manager.add_user_data(user_id, 'github', db_user['github'])

@@ -160,11 +160,17 @@ class DeviconResolver:
             'blender': 'blender',
             'unity': 'unity',
             'unreal': 'unrealengine',
+            'excel': 'google', # Using google sheets as proxy or handled by custom icon
             
-            # NOTE: These concepts DON'T have icons - removed from mappings:
-            # 'rag', 'chatbot', 'machine learning', 'ml', 'ai', 'artificial intelligence',
-            # 'deep learning', 'nlp', 'computer vision', 'data science', 'data analytics',
-            # 'power bi', 'tableau', 'business intelligence', 'sql', 'dashboard'
+            # Typo fixes and variations
+            'superbase': 'supabase',
+            'versel': 'vercel',
+            'machine learning': 'tensorflow', # Fallback
+            'deep learning': 'pytorch', # Fallback
+            'sql': 'mysql', # Generic SQL fallback
+            'postgres': 'postgresql',
+            'html': 'html5',
+            'css': 'css3',
         }
     
     def _normalize_skill_name(self, skill: str) -> str:

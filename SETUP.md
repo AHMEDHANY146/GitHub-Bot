@@ -1,9 +1,11 @@
 # GitHub README Bot - Complete Setup Guide
 
 ## 🚀 Overview
+
 This advanced Telegram bot converts user voice messages or text into professional GitHub README.md files with AI-powered information extraction and Devicon icons.
 
 ## ✨ Features
+
 - 🎤 **Voice-to-text processing** with Gemini AI
 - 🤖 **AI-powered skill extraction** using structured data
 - 🎨 **Devicon icons** for technologies and tools
@@ -14,51 +16,66 @@ This advanced Telegram bot converts user voice messages or text into professiona
 - 🛡️ **Input validation and error handling**
 
 ## 📋 Prerequisites
+
 - Python 3.10+
 - Telegram Bot Token
-- At least one LLM API key (Gemini or Cohere)
+- Gemini API Key (Primary)
+- Supabase Project (for database)
+- GitHub Personal Access Token (for auto-deploy)
 
 ## 🛠️ Installation
 
 ### 1. Clone the Repository
+
 ```bash
 git clone <repository-url>
 cd GitHub-Bot
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Set Up Environment Variables
+
 Create a `.env` file in the root directory:
+
 ```env
-# Required
+# Required - Bot
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
 
-# At least one LLM provider is required
+# Required - AI
 GEMINI_API_KEY=your_gemini_api_key_here
-COHERE_API_KEY=your_cohere_api_key_here
+COHERE_API_KEY=your_cohere_api_key_here  # Optional secondary provider
+GROQ_API_KEY=your_groq_api_key_here      # Optional
+
+# Required - Database
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_anon_key
 
 # Optional (for enhanced features)
 ```
 
 ### 4. Get Required API Keys
 
-#### Telegram Bot Token:
+#### Telegram Bot Token
+
 1. Start a chat with [@BotFather](https://t.me/BotFather) on Telegram
 2. Send `/newbot` command
 3. Follow the instructions to create your bot
 4. Copy the bot token provided
 
-#### Gemini API Key:
+#### Gemini API Key
+
 1. Go to [Google AI Studio](https://aistudio.google.com/)
 2. Sign in with your Google account
 3. Click "Get API Key"
 4. Create a new API key and copy it
 
-#### Cohere API Key (Optional):
+#### Cohere API Key (Optional)
+
 1. Go to [Cohere Dashboard](https://dashboard.cohere.com/)
 2. Sign up and verify your account
 3. Navigate to API keys
@@ -67,16 +84,19 @@ COHERE_API_KEY=your_cohere_api_key_here
 ## 🏃‍♂️ Running the Bot
 
 ### Method 1: Direct Run
+
 ```bash
 python bot/main.py
 ```
 
 ### Method 2: Using Python Module
+
 ```bash
 python -m bot.main
 ```
 
 ## 📁 Project Structure
+
 ```
 GitHub-Bot/
 ├── bot/
@@ -119,7 +139,8 @@ GitHub-Bot/
 
 ## 🎯 How It Works
 
-### User Flow:
+### User Flow
+
 1. **Start**: User sends `/start` to begin
 2. **Collection**: Bot collects name, GitHub, LinkedIn, portfolio, email
 3. **Input**: User sends voice message or text about experience
@@ -128,7 +149,8 @@ GitHub-Bot/
 6. **Generation**: Bot generates README with Devicon icons
 7. **Delivery**: User receives ZIP file with README + instructions
 
-### Technical Flow:
+### Technical Flow
+
 1. **STT Processing**: Voice → Text using Gemini
 2. **LLM Extraction**: Text → Structured JSON data
 3. **Icon Mapping**: Skills → Devicon icons
@@ -137,47 +159,55 @@ GitHub-Bot/
 
 ## 🔧 Configuration
 
-### Environment Variables:
+### Environment Variables
+
 ```env
 TELEGRAM_BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
 GEMINI_API_KEY=your_gemini_api_key
 COHERE_API_KEY=your_cohere_api_key
 ```
 
-### Supported LLM Providers:
+### Supported LLM Providers
+
 - **Gemini** (Google): Default, supports both STT and LLM
 - **Cohere**: LLM-only, requires separate STT provider
 
-### Supported Audio Formats:
+### Supported Audio Formats
+
 - `.mp3`, `.wav`, `.ogg`, `.oga`, `.m4a`, `.flac`
 
 ## 📊 Features in Detail
 
 ### 🎤 Voice Processing
+
 - Automatic transcription using Gemini AI
 - Support for multiple audio formats
 - Temporary file cleanup
 - Error handling for failed transcriptions
 
 ### 🤖 AI-Powered Extraction
+
 - Structured data extraction with JSON schema
 - Skill categorization (skills, tools, languages)
 - Automatic validation and cleaning
 - Support for multiple LLM providers
 
 ### 🎨 Devicon Integration
+
 - 1000+ technology icons
 - Automatic icon URL generation
 - Caching for performance
 - Fallback to text if icon not found
 
 ### 📦 ZIP Generation
+
 - README.md with professional formatting
 - INSTRUCTIONS.md with setup guide
 - Contact information placeholders
 - GitHub stats integration
 
 ### ✏️ Edit & Regenerate
+
 - Review extracted information
 - Edit skills and details
 - Regenerate README with corrections
@@ -185,19 +215,22 @@ COHERE_API_KEY=your_cohere_api_key
 
 ## 🛠️ Development
 
-### Adding New Features:
+### Adding New Features
+
 1. **New Handlers**: Create in `bot/handlers/`
 2. **Register**: Add to `bot/router.py`
 3. **Services**: Add to `services/`
 4. **Utilities**: Add to `utils/`
 
-### Code Architecture:
+### Code Architecture
+
 - **Provider Pattern**: For LLM/STT services
 - **Factory Pattern**: For provider selection
 - **State Machine**: For conversation flow
 - **Interface Segregation**: Clean abstractions
 
-### Testing:
+### Testing
+
 ```bash
 # Test voice processing
 python -m bot.handlers.voice_handler
@@ -211,7 +244,7 @@ python -m devicon.resolver
 
 ## 🔍 Troubleshooting
 
-### Common Issues:
+### Common Issues
 
 1. **"ModuleNotFoundError: No module named 'bot'"**
    - Run from project root: `python bot/main.py`
@@ -222,27 +255,33 @@ python -m devicon.resolver
    - Check token format: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
 
 3. **"No LLM API keys found"**
-   - Set at least one: `GEMINI_API_KEY` or `COHERE_API_KEY`
+   - Set `GEMINI_API_KEY` in .env
    - Restart bot after updating
 
-4. **"Could not transcribe audio"**
-   - Check audio file format
-   - Verify Gemini API key is valid
-   - Ensure audio quality is clear
+4. **"Supabase connection failed"**
+   - Check `SUPABASE_URL` and `SUPABASE_KEY`
+   - Ensure you are using the Service Role Key (not Anon) for full access if needed
 
-5. **"Could not extract structured data"**
+5. **"GitHub 404 Error (Snake Animation)"**
+   - Ensure your GitHub Token has `workflow` scope
+   - Verify the snake.yml template exists in `resources/templates/`
+   - Wait a few seconds between README upload and workflow creation
+
+6. **"Could not extract structured data"**
    - Provide more detailed input
    - Check LLM provider status
    - Verify input length (min 50 characters)
 
-### Debug Mode:
+### Debug Mode
+
 ```bash
 # Enable debug logging
 export LOG_LEVEL=DEBUG
 python bot/main.py
 ```
 
-### Dependencies:
+### Dependencies
+
 ```bash
 # Reinstall all dependencies
 pip install -r requirements.txt --upgrade
@@ -253,12 +292,14 @@ pip show python-telegram-bot google-generativeai cohere
 
 ## 📈 Monitoring
 
-### Logs:
+### Logs
+
 - Location: `logs/github_bot_YYYYMMDD.log`
 - Format: `timestamp - module - level - message`
 - Rotation: Daily log files
 
-### Performance:
+### Performance
+
 - Devicon caching with LRU cache
 - Temporary file cleanup
 - Conversation state management
@@ -271,7 +312,8 @@ pip show python-telegram-bot google-generativeai cohere
 3. Make changes with tests
 4. Submit pull request
 
-### Code Style:
+### Code Style
+
 - Follow PEP 8
 - Use type hints
 - Add docstrings
@@ -284,6 +326,7 @@ This project is licensed under the MIT License.
 ## 🆘 Support
 
 For issues and questions:
+
 1. Check the logs in `logs/` directory
 2. Review this setup guide
 3. Create an issue in the repository
@@ -292,6 +335,7 @@ For issues and questions:
 ---
 
 **Bot Commands:**
+
 - `/start` - Begin README generation
 - `/help` - Show help information
 
