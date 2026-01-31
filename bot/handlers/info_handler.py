@@ -2,7 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from bot.states import BotState, conversation_manager
 from utils.validators import Validators
-from utils.language import language_manager
+from utils.language import language_manager, Language
 from utils.logger import Logger
 
 
@@ -35,11 +35,21 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_contact_edit(update, text)
     elif user.state == BotState.WAITING_TECH_STACK:
         await handle_tech_stack_add(update, text)
+    elif user.state == BotState.WAITING_EDIT_NAME:
+        await handle_name_input(update, text, is_edit=True)
+    elif user.state == BotState.WAITING_EDIT_GITHUB:
+        await handle_github_input(update, text, is_edit=True)
+    elif user.state == BotState.WAITING_EDIT_LINKEDIN:
+        await handle_linkedin_input(update, text, is_edit=True)
+    elif user.state == BotState.WAITING_EDIT_PORTFOLIO:
+        await handle_portfolio_input(update, text, is_edit=True)
+    elif user.state == BotState.WAITING_EDIT_EMAIL:
+        await handle_email_input(update, text, is_edit=True)
     else:
         await update.message.reply_text(language_manager.get_text("not_sure", user_language))
 
 
-async def handle_name_input(update: Update, name: str):
+async def handle_name_input(update: Update, name: str, is_edit: bool = False):
     """Handle name input"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
@@ -53,6 +63,11 @@ async def handle_name_input(update: Update, name: str):
     # Save name
     conversation_manager.add_user_data(user_id, 'name', name)
     
+    if is_edit:
+        await update.message.reply_text(language_manager.get_text("name_saved", user_language, name=name))
+        await return_to_confirmation(update, user_id)
+        return
+
     # Ask for GitHub username (now required)
     conversation_manager.update_user_state(user_id, BotState.WAITING_GITHUB)
     
@@ -62,7 +77,7 @@ async def handle_name_input(update: Update, name: str):
     logger.info(f"User {user_id} provided name: {name}")
 
 
-async def handle_github_input(update: Update, github: str):
+async def handle_github_input(update: Update, github: str, is_edit: bool = False):
     """Handle GitHub username input (now required)"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
@@ -76,6 +91,11 @@ async def handle_github_input(update: Update, github: str):
     # Save GitHub username
     conversation_manager.add_user_data(user_id, 'github', github)
     
+    if is_edit:
+        await update.message.reply_text(language_manager.get_text("github_saved", user_language, github=github))
+        await return_to_confirmation(update, user_id)
+        return
+
     # Ask for LinkedIn (skip profile style selection)
     conversation_manager.update_user_state(user_id, BotState.WAITING_LINKEDIN)
     
@@ -85,7 +105,7 @@ async def handle_github_input(update: Update, github: str):
     logger.info(f"User {user_id} provided GitHub: {github}")
 
 
-async def handle_linkedin_input(update: Update, linkedin: str):
+async def handle_linkedin_input(update: Update, linkedin: str, is_edit: bool = False):
     """Handle LinkedIn URL input"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
@@ -102,6 +122,11 @@ async def handle_linkedin_input(update: Update, linkedin: str):
     # Save LinkedIn URL
     conversation_manager.add_user_data(user_id, 'linkedin', linkedin)
     
+    if is_edit:
+        await update.message.reply_text(language_manager.get_text("linkedin_saved", user_language))
+        await return_to_confirmation(update, user_id)
+        return
+
     # Ask for portfolio
     conversation_manager.update_user_state(user_id, BotState.WAITING_PORTFOLIO)
     
@@ -115,7 +140,7 @@ async def handle_linkedin_input(update: Update, linkedin: str):
     logger.info(f"User {user_id} provided LinkedIn: {linkedin}")
 
 
-async def handle_portfolio_input(update: Update, portfolio: str):
+async def handle_portfolio_input(update: Update, portfolio: str, is_edit: bool = False):
     """Handle portfolio URL input"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
@@ -132,6 +157,11 @@ async def handle_portfolio_input(update: Update, portfolio: str):
     # Save portfolio URL
     conversation_manager.add_user_data(user_id, 'portfolio', portfolio)
     
+    if is_edit:
+        await update.message.reply_text(language_manager.get_text("portfolio_saved", user_language))
+        await return_to_confirmation(update, user_id)
+        return
+
     # Ask for email
     conversation_manager.update_user_state(user_id, BotState.WAITING_EMAIL)
     
@@ -145,7 +175,7 @@ async def handle_portfolio_input(update: Update, portfolio: str):
     logger.info(f"User {user_id} provided portfolio: {portfolio}")
 
 
-async def handle_email_input(update: Update, email: str):
+async def handle_email_input(update: Update, email: str, is_edit: bool = False):
     """Handle email input"""
     user_id = update.effective_user.id
     user_language = conversation_manager.get_user_language(user_id)
@@ -162,6 +192,11 @@ async def handle_email_input(update: Update, email: str):
     # Save email
     conversation_manager.add_user_data(user_id, 'email', email)
     
+    if is_edit:
+        await update.message.reply_text(language_manager.get_text("email_saved", user_language, default="✅ Email saved"))
+        await return_to_confirmation(update, user_id)
+        return
+
     # Move to experience collection
     await start_experience_collection(update, user_id)
 
@@ -405,3 +440,36 @@ async def handle_tech_stack_add(update: Update, text: str):
         await update.message.reply_text(language_manager.get_text("tech_stack_error", user_language))
     
     logger.info(f"User {user_id} added tech stack items")
+
+
+async def return_to_confirmation(update, user_id):
+    """Helper to return to confirmation screen"""
+    from bot.handlers.confirm_handler import show_confirmation
+    conversation_manager.update_user_state(user_id, BotState.CONFIRMATION)
+    await show_confirmation(update, user_id)
+
+
+async def handle_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle cancel request (go back to previous state)"""
+    user_id = update.effective_user.id
+    user = conversation_manager.get_user(user_id)
+    user_language = conversation_manager.get_user_language(user_id)
+    
+    # If we have a previous state, go back to it
+    if user.previous_state and user.previous_state != BotState.START:
+        prev_state = user.previous_state
+        conversation_manager.update_user_state(user_id, prev_state)
+        
+        # If returning to confirmation, show it
+        if prev_state == BotState.CONFIRMATION:
+            from bot.handlers.confirm_handler import show_confirmation
+            await show_confirmation(update, user_id)
+            return
+            
+        # For other states, just notify
+        await update.message.reply_text(f"⬅️ Returning to previous step...")
+        logger.info(f"User {user_id} cancelled and returned to {prev_state}")
+    else:
+        # Full reset if no previous state or at START
+        from bot.handlers.reset_handler import reset_handler
+        await reset_handler(update, context)

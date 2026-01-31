@@ -1,7 +1,7 @@
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler
 from telegram.ext import filters
 from bot.handlers.start_handler import start_handler, help_callback, start_collection_callback
-from bot.handlers.info_handler import handle_text_input, skip_field_callback
+from bot.handlers.info_handler import handle_text_input, skip_field_callback, handle_cancel
 from bot.handlers.voice_handler import voice_handler
 from bot.handlers.confirm_handler import (
     approve_readme_callback, 
@@ -9,7 +9,9 @@ from bot.handlers.confirm_handler import (
     edit_contact_callback,
     add_tech_stack_callback,
     regenerate_readme_callback, 
-    cancel_readme_callback
+    cancel_readme_callback,
+    edit_basic_field_callback,
+    back_to_confirm_callback
 )
 from bot.handlers.language_handler import language_selection_callback
 from bot.handlers.rating_handler import (
@@ -49,6 +51,13 @@ def setup_handlers(application: Application):
     application.add_handler(CallbackQueryHandler(regenerate_readme_callback, pattern="^regenerate_readme$"))
     application.add_handler(CallbackQueryHandler(cancel_readme_callback, pattern="^cancel_readme$"))
     application.add_handler(CallbackQueryHandler(language_selection_callback, pattern="^lang_"))
+    
+    # Granular edit handlers
+    application.add_handler(CallbackQueryHandler(edit_basic_field_callback, pattern="^edit_basic_"))
+    application.add_handler(CallbackQueryHandler(back_to_confirm_callback, pattern="^back_to_confirm$"))
+    
+    # Global Cancel handler (command or callback)
+    application.add_handler(CommandHandler("cancel", handle_cancel))
     
     # Skill selection handlers
     from bot.handlers.skill_handler import handle_skill_toggle, handle_skill_page, handle_skill_done, handle_skill_noop

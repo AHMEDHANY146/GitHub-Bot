@@ -27,14 +27,13 @@ async def show_confirmation(update: Update, user_id: int):
     keyboard = [
         [
             InlineKeyboardButton(language_manager.get_text("approve_button", user_language), callback_data="approve_readme"),
-            InlineKeyboardButton(language_manager.get_text("edit_button", user_language), callback_data="edit_skills")
-        ],
-        [
-            InlineKeyboardButton(language_manager.get_text("edit_contact_button", user_language), callback_data="edit_contact"),
             InlineKeyboardButton(language_manager.get_text("add_tech_button", user_language), callback_data="add_tech_stack")
         ],
         [
-            InlineKeyboardButton(language_manager.get_text("regenerate_button", user_language), callback_data="regenerate_readme"),
+            InlineKeyboardButton(language_manager.get_text("edit_contact_button", user_language), callback_data="edit_contact"),
+            InlineKeyboardButton(language_manager.get_text("regenerate_button", user_language), callback_data="regenerate_readme")
+        ],
+        [
             InlineKeyboardButton(language_manager.get_text("cancel_button", user_language), callback_data="cancel_readme")
         ]
     ]
@@ -218,13 +217,77 @@ async def edit_contact_callback(update: Update, context: ContextTypes.DEFAULT_TY
     user_language_code = conversation_manager.get_user_language(user_id)
     user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
-    # Move to contact editing state
-    conversation_manager.update_user_state(user_id, BotState.WAITING_CONTACT)
+    # Show sub-menu for granular editing
+    keyboard = [
+        [
+            InlineKeyboardButton(language_manager.get_text("edit_name_button", user_language), callback_data="edit_basic_name"),
+            InlineKeyboardButton(language_manager.get_text("edit_github_button", user_language), callback_data="edit_basic_github")
+        ],
+        [
+            InlineKeyboardButton(language_manager.get_text("edit_linkedin_button", user_language), callback_data="edit_basic_linkedin"),
+            InlineKeyboardButton(language_manager.get_text("edit_portfolio_button", user_language), callback_data="edit_basic_portfolio")
+        ],
+        [
+            InlineKeyboardButton(language_manager.get_text("edit_email_button", user_language), callback_data="edit_basic_email")
+        ],
+        [
+            InlineKeyboardButton(language_manager.get_text("back_to_confirmation", user_language), callback_data="back_to_confirm")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
-    contact_edit_text = language_manager.get_text("contact_edit_prompt", user_language)
+    await query.edit_message_text(
+        language_manager.get_text("edit_contact_menu_title", user_language),
+        reply_markup=reply_markup
+    )
+    logger.info(f"User {user_id} opened granular edit menu")
+
+
+async def edit_basic_field_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle individual field edit button press"""
+    query = update.callback_query
+    await query.answer()
     
-    await query.edit_message_text(contact_edit_text, parse_mode='Markdown')
-    logger.info(f"User {user_id} chose to edit contact information")
+    user_id = update.effective_user.id
+    field = query.data.replace("edit_basic_", "")
+    user_language_code = conversation_manager.get_user_language(user_id)
+    user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
+    
+    # Map fields to states and prompts
+    field_map = {
+        "name": (BotState.WAITING_EDIT_NAME, "start_collection"),
+        "github": (BotState.WAITING_EDIT_GITHUB, "name_saved"), # name_saved prompt asks for github
+        "linkedin": (BotState.WAITING_EDIT_LINKEDIN, "github_saved"), # github_saved asks for linkedin
+        "portfolio": (BotState.WAITING_EDIT_PORTFOLIO, "linkedin_saved"),
+        "email": (BotState.WAITING_EDIT_EMAIL, "portfolio_saved")
+    }
+    
+    if field in field_map:
+        state, prompt_key = field_map[field]
+        conversation_manager.update_user_state(user_id, state)
+        
+        # Determine the correct prompt text (some need params like name)
+        if prompt_key == "name_saved":
+            name = conversation_manager.get_user_data(user_id, 'name', 'there')
+            text = language_manager.get_text(prompt_key, user_language, name=name)
+        elif prompt_key == "github_saved":
+            github = conversation_manager.get_user_data(user_id, 'github', 'user')
+            text = language_manager.get_text(prompt_key, user_language, github=github)
+        else:
+            text = language_manager.get_text(prompt_key, user_language)
+            
+        await query.edit_message_text(text)
+        logger.info(f"User {user_id} editing field: {field}")
+
+
+async def back_to_confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Return to confirmation screen"""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = update.effective_user.id
+    conversation_manager.update_user_state(user_id, BotState.CONFIRMATION)
+    await show_confirmation(update, user_id)
 
 
 async def add_tech_stack_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -236,12 +299,9 @@ async def add_tech_stack_callback(update: Update, context: ContextTypes.DEFAULT_
     user_language_code = conversation_manager.get_user_language(user_id)
     user_language = language_manager.get_language_from_code(user_language_code) if user_language_code else Language.ENGLISH
     
-    # Move to tech stack adding state
-    conversation_manager.update_user_state(user_id, BotState.WAITING_TECH_STACK)
-    
-    tech_stack_text = language_manager.get_text("tech_stack_prompt", user_language)
-    
-    await query.edit_message_text(tech_stack_text, parse_mode='Markdown')
+    # Show interactive skill selection instead of text prompt
+    from bot.handlers.skill_handler import show_skill_selection
+    await show_skill_selection(update, user_id)
     logger.info(f"User {user_id} chose to add tech stack items")
 
 

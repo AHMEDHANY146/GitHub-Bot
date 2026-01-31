@@ -22,8 +22,3 @@ class LLMInterface(ABC):
     def extract_structured_data(self, text: str, schema: Dict[str, Any], prompt_template: str = None) -> Optional[Dict[str, Any]]:
         """Extract structured data from text following a specific schema"""
         pass
-
-
-
-
-```

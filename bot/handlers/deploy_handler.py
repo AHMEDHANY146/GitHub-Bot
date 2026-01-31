@@ -10,6 +10,7 @@ from bot.states import BotState, conversation_manager
 from utils.language import language_manager, Language
 from utils.logger import Logger
 from services.github_api import GitHubAPI
+from bot.handlers.rating_handler import show_rating_prompt
 
 logger = Logger.get_logger(__name__)
 
@@ -159,6 +160,9 @@ async def handle_github_token(update: Update, context: ContextTypes.DEFAULT_TYPE
         success_text = language_manager.get_text("deploy_success", user_language, repo_url=repo_url)
 
         await status_msg.edit_text(success_text, parse_mode='Markdown')
+        
+        # Trigger feedback prompt automatically
+        await show_rating_prompt(update, context)
         
         # Mark state as completed
         conversation_manager.update_user_state(user_id, BotState.COMPLETED)

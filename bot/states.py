@@ -25,6 +25,12 @@ class BotState(Enum):
     CONFIRMATION = "confirmation"
     WAITING_GITHUB_TOKEN = "waiting_github_token"
     COMPLETED = "completed"
+    # Granular edit states
+    WAITING_EDIT_NAME = "waiting_edit_name"
+    WAITING_EDIT_GITHUB = "waiting_edit_github"
+    WAITING_EDIT_LINKEDIN = "waiting_edit_linkedin"
+    WAITING_EDIT_PORTFOLIO = "waiting_edit_portfolio"
+    WAITING_EDIT_EMAIL = "waiting_edit_email"
 
 
 class UserData:
@@ -33,6 +39,7 @@ class UserData:
     def __init__(self, user_id: int):
         self.user_id = user_id
         self.state = BotState.START
+        self.previous_state = None
         self.data = {}
         self.temp_files = []
         self._dirty = False  # Track if needs saving
@@ -42,6 +49,7 @@ class UserData:
     def update_state(self, new_state: BotState):
         """Update conversation state"""
         import time
+        self.previous_state = self.state
         self.state = new_state
         self.last_updated = time.time()
         self._dirty = True

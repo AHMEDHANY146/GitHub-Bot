@@ -36,19 +36,35 @@ def build_skill_keyboard(user_id: int, page: int = 0) -> tuple:
     user_language = conversation_manager.get_user_language(user_id)
     selected_skills = get_user_selected_skills(user_id)
     
-    # Get popular skills
-    all_popular = get_popular_skills(50)
+    # Get all available skills from the flat list
+    from resources.common_skills import ALL_SKILLS_FLAT
     
-    # Add AI-extracted skills that might not be in popular list
-    for skill in selected_skills:
-        if skill not in all_popular:
-            all_popular.append(skill)
+    # Use a dictionary to deduplicate case-insensitively while preserving display case
+    seen_skills = {} # lower_case -> original_case
+    
+    # 1. Add skills from the official list
+    for s in ALL_SKILLS_FLAT:
+        lowered = s.lower().strip()
+        if lowered not in seen_skills:
+            seen_skills[lowered] = s
+            
+    # 2. Add AI-extracted/user-selected skills that might not be in the list
+    for s in selected_skills:
+        lowered = s.lower().strip()
+        if lowered not in seen_skills:
+            seen_skills[lowered] = s
+            
+    # Convert back to a list
+    all_available = list(seen_skills.values())
+    
+    # Optional: Sort alphabetically for better UX
+    all_available.sort(key=lambda x: x.lower())
     
     # Pagination
-    total_pages = (len(all_popular) + SKILLS_PER_PAGE - 1) // SKILLS_PER_PAGE
+    total_pages = (len(all_available) + SKILLS_PER_PAGE - 1) // SKILLS_PER_PAGE
     start_idx = page * SKILLS_PER_PAGE
-    end_idx = min(start_idx + SKILLS_PER_PAGE, len(all_popular))
-    page_skills = all_popular[start_idx:end_idx]
+    end_idx = min(start_idx + SKILLS_PER_PAGE, len(all_available))
+    page_skills = all_available[start_idx:end_idx]
     
     # Build skill buttons (3 per row)
     keyboard = []

@@ -58,9 +58,9 @@ class MarkdownGenerator:
                 unique_skills.append(skill)
         
         if unique_skills:
-            # Pass languages as exclusion list to avoid duplicates
-            excluded_langs = structured_data.get('languages', [])
-            sections.append(self._generate_skills_section(unique_skills, exclude=excluded_langs))
+            # Unified tech stack section with ALL unique items
+            sections.append("## 🛠️ Tech Stack")
+            sections.append(self._generate_skills_section(unique_skills))
         
         # Snake animation (GitHub username is now required)
         if structured_data.get('github'):
@@ -164,8 +164,7 @@ class MarkdownGenerator:
 </div>
 
 ---
-
-## 🛠️ Tech Stack"""
+"""
     
     def _generate_programming_languages_section(self, languages: List[str]) -> str:
         """Generate Programming Languages section with icons"""
