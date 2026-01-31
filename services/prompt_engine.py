@@ -83,10 +83,16 @@ Use English for the entire file. If you cannot extract certain information, leav
         return """
 You are a professional resume analyzer and GitHub profile optimizer. 
 
+CRITICAL LANGUAGE INSTRUCTIONS:
+- ALL output MUST be in English.
+- If the user provides input in Arabic, Egyptian, or any other language, TRANSLATE it to professional English.
+- NEVER include non-English text in the JSON values.
+- STICK TO PROFESSIONAL ENGLISH terminology for technical roles and descriptions.
+
 Extract following information from user's input and return it as a JSON object:
 
-1. **name**: The person's full name
-2. **summary**: A compelling, professional summary (3-4 sentences) that:
+1. **name**: The person's full name (Convert to English/Latin characters).
+2. **summary**: A compelling, professional summary in English (3-4 sentences) that:
    - Starts with their role/title and years of experience
    - Highlights their TOP 2-3 areas of expertise with specific technologies
    - Mentions a notable achievement or passion
@@ -95,49 +101,23 @@ Extract following information from user's input and return it as a JSON object:
    GOOD EXAMPLES:
    - "Passionate Full-Stack Developer with 3+ years of experience building scalable web applications. Specialized in React, Node.js, and cloud architecture on AWS. Led development of an e-commerce platform serving 50K+ users. Currently exploring AI integration in web apps."
    - "Data Scientist and ML Engineer with expertise in NLP and computer vision. Built production ML pipelines processing 1M+ records using PyTorch and TensorFlow. Open-source contributor passionate about making AI accessible."
-   
-   BAD EXAMPLES (avoid these):
-   - "I'm a developer who knows many things" (too vague)
-   - "Python, React, Docker" (just a list, no story)
-   - "I like coding" (not professional)
 
-3. **skills**: An array of ALL technical skills mentioned including:
-   - Programming languages (python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
-   - Data science tools (pandas, numpy, tensorflow, pytorch, scikit-learn, jupyter, etc.)
-   - Frameworks and libraries (react, vue, angular, django, flask, spring, laravel, express, next, tailwind, bootstrap, etc.)
-   - Development methodologies (agile, scrum, devops, etc.)
-   - Cloud platforms (aws, azure, gcp, firebase, etc.)
-   - Databases (mysql, postgresql, mongodb, sqlite, redis, etc.)
-   - DevOps tools (docker, kubernetes, jenkins, git, github, gitlab, etc.)
-   - Frontend technologies (html, css, javascript, typescript, etc.)
-   - Backend technologies (nodejs, express, django, flask, etc.)
-   - Mobile development (react native, flutter, swift, kotlin, etc.)
-   - Business intelligence tools (power bi, tableau, etc.)
-4. **tools**: An array of development tools and platforms they use (git, github, docker, kubernetes, aws, azure, power bi, tableau, etc.)
-5. **languages**: An array of programming languages they know (focus on core languages: python, javascript, c++, typescript, go, rust, php, swift, kotlin, ruby, scala, r, matlab, etc.)
-6. **currently_working_on**: What they're currently working on (extract from their description). Can be in user's language.
-7. **currently_learning**: What they're currently learning (extract from their description). Can be in user's language.
-8. **open_to**: What opportunities they're open to (extract from their description). Can be in user's language.
-9. **fun_fact**: A personal fun fact or interesting detail about them (extract from their description). Can be in user's language.
+3. **skills**: An array of ALL technical skills mentioned in English.
+4. **tools**: An array of development tools and platforms in English.
+5. **languages**: An array of programming languages.
+6. **currently_working_on**: What they're currently working on (TRANSLATED TO ENGLISH).
+7. **currently_learning**: What they're currently learning (TRANSLATED TO ENGLISH).
+8. **open_to**: What opportunities they're open to (TRANSLATED TO ENGLISH).
+9. **fun_fact**: A personal fun fact or interesting detail (TRANSLATED TO ENGLISH).
 
 Guidelines:
 - STRICTLY extract ONLY skills mentioned in the input or explicitly provided.
 - DO NOT hallucinate or infer skills that are not clearly stated.
-- If the user provides a list of chosen skills, USE IT EXACTLY.
-- Include both hard skills (technologies) and domain-specific skills.
 - For languages, focus on programming languages specifically.
-- Keep skill names lowercase and standardized (e.g., "javascript").
+- Keep skill names lowercase and standardized.
 - If information is missing, use null or empty array.
-- DO NOT add "Git" or "GitHub" unless explicitly mentioned.
-- DO NOT add "Windows" or "Linux" unless explicitly mentioned.
 
-Examples of good extraction:
-- "I work with python, tensorflow" → skills: ["python", "tensorflow"], languages: ["python"]
-- "I use Power BI" → tools: ["power bi"]
-
-IMPORTANT: Accuracy is better than quantity. Do not invent skills.
-
-Return ONLY the JSON object. No markdown, no explanations, just the raw JSON.
+IMPORTANT: EVERYTHING MUST BE IN ENGLISH. Return ONLY the JSON object. No markdown, no explanations, just the raw JSON.
 """
 
     @staticmethod
@@ -177,9 +157,10 @@ Special Instructions:
 - For data science profiles, emphasize ML/AI focus
 - Use dark theme for GitHub stats
 - Include proper HTML div structure
-- CRITICAL: Never include Arabic text or any non-English introductions in the About Me section
+- CRITICAL: STRICTLY FORBIDDEN to include Arabic text or any non-English content in any part of the README.
+- CRITICAL: TRANSLATE any provided information to professional English if it is in another language.
 - CRITICAL: Never include prefixes like "Here's a personalized 'About Me' section for [Name]'s GitHub README:"
-- Generate clean, direct About Me content starting immediately with the introduction
+- Generate clean, direct content starting immediately with the header or section.
 
 Generate only the README content, no explanations.
 """
