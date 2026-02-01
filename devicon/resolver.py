@@ -194,22 +194,41 @@ class DeviconResolver:
         if not self.devicon_data:
             return False
         
-        # First try to normalize the skill name
-        normalized_skill = self._normalize_skill_name(skill)
-        skill_lower = normalized_skill.lower().strip()
-        
+        # Canonical name check (handles mappings and altnames)
+        canonical = self.get_canonical_name(skill)
+        return canonical is not None
+
+    def get_canonical_name(self, skill: str) -> Optional[str]:
+        """
+        Get the canonical name from devicon.json for a given skill name/alias.
+        Returns the primary 'name' field if found, else None.
+        """
+        if not self.devicon_data:
+            return None
+
+        # 1. Check direct mappings (e.g., 'js' -> 'javascript')
+        skill_lower = skill.lower().strip()
+        mapped_name = self.skill_mappings.get(skill_lower)
+        lookup_name = mapped_name if mapped_name else skill_lower
+
+        # 2. Search in devicon_data
         for entry in self.devicon_data:
-            # Check main name
-            if entry['name'].lower() == skill_lower:
-                return True
+            name = entry['name'].lower()
+            if name == lookup_name:
+                return entry['name']
             
-            # Check alternative names
             if 'altnames' in entry:
                 for altname in entry['altnames']:
-                    if altname.lower() == skill_lower:
-                        return True
+                    if altname.lower() == lookup_name:
+                        return entry['name']
         
-        return False
+        # 3. Last fallback: partial match if no exact match found
+        # (Be careful with this to avoid over-matching)
+        for entry in self.devicon_data:
+            if lookup_name == entry['name'].lower():
+                 return entry['name']
+            
+        return None
     
     @lru_cache(maxsize=1000)
     def get_icon_url(self, skill: str, version: str = "original") -> Optional[str]:
@@ -321,8 +340,16 @@ class DeviconResolver:
         
         return matches[:limit]
     
+    def get_all_display_names(self) -> List[str]:
+        """Get all primary skill names from devicon.json for display"""
+        if not self.devicon_data:
+            return []
+        
+        names = [entry['name'] for entry in self.devicon_data]
+        return sorted(list(set(names)))
+
     def get_all_skills(self) -> Set[str]:
-        """Get all available skill names"""
+        """Get all available skill names (including altnames)"""
         if not self.devicon_data:
             return set()
         

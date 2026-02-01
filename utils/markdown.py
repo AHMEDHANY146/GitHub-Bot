@@ -336,6 +336,10 @@ class MarkdownGenerator:
         for skill in skills:
             skill_lower = skill.lower().strip()
             
+            # Check if skill is valid in Devicon first
+            if not self.devicon_resolver.validate_skill(skill):
+                continue
+                
             # First check if we have an icon from devicon
             icon_url = skill_icons.get(skill)
             
@@ -357,13 +361,14 @@ class MarkdownGenerator:
                          icon_url = url
                          break
 
-            # Add skill entry (Image if found, formatted text badge if not)
+            # Add skill entry (ONLY if icon_url is found or devicon confirms it exists)
             if icon_url:
                 skill_entries.append(f'  <img src="{icon_url}" height="40" alt="{skill} logo" title="{skill.title()}" />')
             else:
-                # Fallback to Shields.io badge for missing icons so it's not hidden
-                encoded_skill = skill.replace(' ', '%20')
-                skill_entries.append(f'  <img src="https://img.shields.io/badge/{encoded_skill}-333333?style=flat&logo=github" height="30" alt="{skill}" />')
+                # If valid in Devicon but no icon_url found yet, try primary icon
+                primary_icon = self.devicon_resolver.get_icon_url(skill)
+                if primary_icon:
+                    skill_entries.append(f'  <img src="{primary_icon}" height="40" alt="{skill} logo" title="{skill.title()}" />')
         
         return skill_entries
     
@@ -495,7 +500,7 @@ Programming Languages: {', '.join(languages) if languages else 'Not specified'}
 Background/Summary: {summary}
 
 Requirements:
-1. SUBTITLE: Generate a professional subtitle (under 80 characters, 2-3 roles separated by " | ", with emojis)
+1. SUBTITLE: Generate a professional subtitle (under 80 characters, 2-3 roles separated by " | ", without emojis)
    - Should reflect their main role and expertise
    - Example: " Data Scientist | ML Engineer | Analytics Expert"
 

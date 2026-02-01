@@ -383,6 +383,14 @@ async def handle_tech_stack_add(update: Update, text: str):
             await update.message.reply_text(language_manager.get_text("tech_stack_error_empty", user_language))
             return
         
+        # Validate and clean items against Devicon
+        from utils.validators import Validators
+        valid_items = Validators.validate_skills(items)
+        
+        if not valid_items:
+            await update.message.reply_text(language_manager.get_text("tech_stack_error_invalid_skills", user_language, default="❌ None of the skills you provided are supported. Please check the available list."))
+            return
+        
         # Get current structured data
         user = conversation_manager.get_user(user_id)
         structured_data = user.get_data('structured_data', {})
@@ -397,14 +405,15 @@ async def handle_tech_stack_add(update: Update, text: str):
         added_languages = []
         
         # Categorize new items
-        for item in items:
-            item_lower = item.lower()
-            # Improved categorization matching the markdown generator
-            if any(lang in item_lower for lang in ['python', 'javascript', 'java', 'c++', 'c#', 'typescript', 'go', 'rust', 'php', 'swift', 'kotlin', 'ruby', 'scala', 'r', 'matlab', 'html', 'css']):
+        from resources.common_skills import get_skill_category
+        for item in valid_items:
+            category = get_skill_category(item)
+            
+            if category == 'languages':
                 if item not in current_languages:
                     current_languages.append(item)
                     added_languages.append(item)
-            elif any(keyword in item_lower for keyword in ['tensorflow', 'pytorch', 'keras', 'scikit', 'pandas', 'numpy', 'matplotlib', 'seaborn', 'opencv', 'nltk', 'spacy', 'react', 'vue', 'angular', 'django', 'flask', 'spring', 'laravel', 'express', 'next', 'tailwind', 'bootstrap', 'node', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'github', 'gitlab', 'power bi', 'tableau', 'excel', 'sql', 'mongodb', 'postgresql', 'mysql', 'redis', 'rag', 'chatbot', 'machine learning', 'deep learning', 'nlp', 'computer vision', 'data science', 'ai', 'artificial intelligence']):
+            elif category in ['frontend', 'backend', 'data_science', 'databases', 'devops', 'mobile']:
                 if item not in current_skills:
                     current_skills.append(item)
                     added_skills.append(item)

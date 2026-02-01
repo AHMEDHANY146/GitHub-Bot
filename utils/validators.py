@@ -161,31 +161,33 @@ class Validators:
     @staticmethod
     def validate_skills(skills: List[str]) -> List[str]:
         """
-        Validate and clean skills list
+        Validate and clean skills list against devicon.json
         
         Args:
             skills: List of skills to validate
             
         Returns:
-            List of valid skills
+            List of valid canonical skill names
         """
         if not skills or not isinstance(skills, list):
             return []
         
+        from devicon.resolver import DeviconResolver
+        resolver = DeviconResolver()
+        
         valid_skills = []
         for skill in skills:
             if isinstance(skill, str) and skill.strip():
-                # Clean skill name: lowercase, alphanumeric and common symbols only
-                cleaned = re.sub(r'[^a-zA-Z0-9\s\-\+\#\.]', '', skill.strip().lower())
-                if cleaned and len(cleaned) >= 2:
-                    valid_skills.append(cleaned)
+                canonical = resolver.get_canonical_name(skill)
+                if canonical:
+                    valid_skills.append(canonical)
         
         # Remove duplicates while preserving order
         seen = set()
         unique_skills = []
         for skill in valid_skills:
-            if skill not in seen:
-                seen.add(skill)
+            if skill.lower() not in seen:
+                seen.add(skill.lower())
                 unique_skills.append(skill)
         
         return unique_skills
@@ -228,7 +230,7 @@ class Validators:
             return "file"
         
         # Remove invalid characters
-        sanitized = re.sub(r'[<>:"/\\|?*]', '', filename.strip())
+        sanitized = re.sub(r'[<>:"/\\?*]', '', filename.strip())
         
         # Replace spaces with underscores
         sanitized = re.sub(r'\s+', '_', sanitized)

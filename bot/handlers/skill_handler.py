@@ -36,28 +36,12 @@ def build_skill_keyboard(user_id: int, page: int = 0) -> tuple:
     user_language = conversation_manager.get_user_language(user_id)
     selected_skills = get_user_selected_skills(user_id)
     
-    # Get all available skills from the flat list
-    from resources.common_skills import ALL_SKILLS_FLAT
+    # Get all available skills from Devicon
+    from devicon.resolver import DeviconResolver
+    resolver = DeviconResolver()
+    all_available = resolver.get_all_display_names()
     
-    # Use a dictionary to deduplicate case-insensitively while preserving display case
-    seen_skills = {} # lower_case -> original_case
-    
-    # 1. Add skills from the official list
-    for s in ALL_SKILLS_FLAT:
-        lowered = s.lower().strip()
-        if lowered not in seen_skills:
-            seen_skills[lowered] = s
-            
-    # 2. Add AI-extracted/user-selected skills that might not be in the list
-    for s in selected_skills:
-        lowered = s.lower().strip()
-        if lowered not in seen_skills:
-            seen_skills[lowered] = s
-            
-    # Convert back to a list
-    all_available = list(seen_skills.values())
-    
-    # Optional: Sort alphabetically for better UX
+    # Optional: Sort alphabetically for better UX (already sorted in resolver but to be safe)
     all_available.sort(key=lambda x: x.lower())
     
     # Pagination
@@ -155,6 +139,7 @@ async def handle_skill_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE
         all_skills.extend(structured_data.get(key, []))
     
     # Toggle skill
+    from utils.validators import Validators
     skill_lower = skill.lower()
     all_skills_lower = [s.lower() for s in all_skills]
     
@@ -164,10 +149,12 @@ async def handle_skill_toggle(update: Update, context: ContextTypes.DEFAULT_TYPE
             current = structured_data.get(key, [])
             structured_data[key] = [s for s in current if s.lower() != skill_lower]
     else:
-        # Add skill to 'skills' category
-        if 'skills' not in structured_data:
-            structured_data['skills'] = []
-        structured_data['skills'].append(skill)
+        # Add skill to 'skills' category, but only if it's valid in Devicon
+        valid_skills = Validators.validate_skills([skill])
+        if valid_skills:
+            if 'skills' not in structured_data:
+                structured_data['skills'] = []
+            structured_data['skills'].append(valid_skills[0])
     
     # Save updated data
     user.add_data('structured_data', structured_data)
