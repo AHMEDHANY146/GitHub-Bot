@@ -133,19 +133,35 @@ class GitHubAPI:
         return True
 
     async def trigger_workflow(self, username: str, repo_name: str, workflow_file: str) -> bool:
-        """Trigger a workflow dispatch event"""
+        """Trigger a workflow dispatch event with retries for propagation"""
+        import asyncio
         async with httpx.AsyncClient() as client:
-            try:
-                url = f"{self.BASE_URL}/repos/{username}/{repo_name}/actions/workflows/{workflow_file}/dispatches"
-                payload = {"ref": "main"}  # Adjust branch if needed
-                
-                response = await client.post(url, headers=self.headers, json=payload)
-                
-                if response.status_code == 204:
-                    return True
-                
-                logger.error(f"Failed to trigger workflow: {response.status_code} - {response.text}")
-                return False
-            except Exception as e:
-                logger.error(f"Error triggering workflow: {e}")
-                return False
+            url = f"{self.BASE_URL}/repos/{username}/{repo_name}/actions/workflows/{workflow_file}/dispatches"
+            payload = {"ref": "main"}
+            
+            # GitHub takes some time to index new workflows
+            max_retries = 5
+            for attempt in range(max_retries):
+                try:
+                    response = await client.post(url, headers=self.headers, json=payload)
+                    
+                    if response.status_code == 204:
+                        logger.info(f"Successfully triggered workflow {workflow_file}")
+                        return True
+                    
+                    if response.status_code == 404:
+                        if attempt < max_retries - 1:
+                            wait_time = (attempt + 1) * 3
+                            logger.warning(f"Workflow {workflow_file} not found (propagation delay?), retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
+                            await asyncio.sleep(wait_time)
+                            continue
+                    
+                    logger.error(f"Failed to trigger workflow: {response.status_code} - {response.text}")
+                    return False
+                except Exception as e:
+                    logger.error(f"Error triggering workflow on attempt {attempt+1}: {e}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2)
+                        continue
+                    return False
+            return False
