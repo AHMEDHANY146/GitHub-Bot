@@ -11,7 +11,8 @@ settings = get_settings()
 async def show_rating_prompt(update, context):
     """Show rating prompt to user after successful README generation"""
     query = update.callback_query
-    await query.answer()
+    if query:
+        await query.answer()
     
     # Get user language preference
     user_id = update.effective_user.id
@@ -43,8 +44,8 @@ async def show_rating_prompt(update, context):
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # Use reply_text instead of edit_message_text because the previous message is a document (ZIP)
-    await query.message.reply_text(rating_text, reply_markup=reply_markup, parse_mode='Markdown')
+    # Use update.effective_message instead of query.message for broader compatibility
+    await update.effective_message.reply_text(rating_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 async def handle_rating_callback(update, context):
