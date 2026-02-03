@@ -140,7 +140,7 @@ class GitHubAPI:
             payload = {"ref": "main"}
             
             # GitHub takes some time to index new workflows
-            max_retries = 5
+            max_retries = 7
             for attempt in range(max_retries):
                 try:
                     response = await client.post(url, headers=self.headers, json=payload)
@@ -151,7 +151,7 @@ class GitHubAPI:
                     
                     if response.status_code == 404:
                         if attempt < max_retries - 1:
-                            wait_time = (attempt + 1) * 3
+                            wait_time = (attempt + 1) * 5
                             logger.warning(f"Workflow {workflow_file} not found (propagation delay?), retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
                             await asyncio.sleep(wait_time)
                             continue

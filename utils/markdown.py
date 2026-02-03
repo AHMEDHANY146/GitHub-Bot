@@ -422,7 +422,7 @@ class MarkdownGenerator:
             return template.format(github_username=github_username)
         except Exception as e:
             # Fallback to hardcoded if template fails
-            return f"\n---\n\n## 🐍 Contribution Graph\n\n<div align=\"center\">\n  <img src=\"https://github.com/{github_username}/{github_username}/blob/output/snake-dark.svg\" alt=\"Snake animation\" />\n</div>"
+            return f"\n---\n\n## 🐍 Contribution Graph\n\n<div align=\"center\">\n  <img src=\"https://raw.githubusercontent.com/{github_username}/{github_username}/output/snake-dark.svg\" alt=\"Snake animation\" />\n</div>"
     
     def _generate_profile_header(self, structured_data: Dict[str, any], github_username: str) -> str:
         """Generate standardized modern profile header"""
