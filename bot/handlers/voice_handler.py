@@ -50,6 +50,7 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if transcribed_text:
                 # Save transcribed text
                 conversation_manager.add_user_data(user_id, 'experience_text', transcribed_text)
+                conversation_manager.add_user_data(user_id, 'raw_input_text', transcribed_text)
                 
                 # Start processing
                 await start_processing(update, user_id)

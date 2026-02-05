@@ -372,7 +372,8 @@ async def generate_and_send_zip(update: Update, context: ContextTypes.DEFAULT_TY
         )
         
         # Create session and save skills
-        session_id = create_readme_session(telegram_id, user.get_data('raw_input_text'))
+        raw_input = user.get_data('raw_input_text') or user.get_data('experience_text') or "Voice transcription/Text input"
+        session_id = create_readme_session(telegram_id, raw_input)
         if session_id:
             # Collect all skills
             all_skills = []
@@ -408,7 +409,7 @@ async def generate_and_send_zip(update: Update, context: ContextTypes.DEFAULT_TY
         zip_buffer.seek(0)
         
         # Create filename using github username 
-        user_name = user.get_data('github')
+        user_name = user.get_data('github') or "readme"
         filename = f"{user_name}.zip"
         
         # Send ZIP file - handle both callback query and regular message

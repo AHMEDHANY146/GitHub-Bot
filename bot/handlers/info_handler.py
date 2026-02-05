@@ -214,6 +214,7 @@ async def handle_experience_text(update: Update, text: str):
     
     # Save experience text
     conversation_manager.add_user_data(user_id, 'experience_text', text)
+    conversation_manager.add_user_data(user_id, 'raw_input_text', text)
     
     # Move to processing
     await start_processing(update, user_id)
@@ -233,6 +234,7 @@ async def handle_edit_experience_text(update: Update, text: str):
     
     # Save combined experience text
     conversation_manager.add_user_data(user_id, 'experience_text', combined_text)
+    conversation_manager.add_user_data(user_id, 'raw_input_text', combined_text)
     
     # Move to processing
     await start_processing(update, user_id)
